@@ -1,6 +1,8 @@
 import Dashboard from "./components/Dashboard";
 import { getMembers } from "./actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home({
   searchParams,
 }: {
