@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
