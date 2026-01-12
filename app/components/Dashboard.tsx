@@ -1,5 +1,5 @@
 "use client";
-
+// Dashboard Component with Client Logic
 import { useState } from "react";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
