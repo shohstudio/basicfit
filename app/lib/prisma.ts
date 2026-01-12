@@ -26,9 +26,9 @@ if (url && authToken) {
     adapter = new PrismaLibSQL(turso);
 } else {
     // In production build, if env vars are missing, we can't connect.
-    // However, failing here might break the build. 
-    // We will throw a clear error to help debug Vercel logs.
-    throw new Error("MISSING TURSO ENV VARS: TURSO_DATABASE_URL or TURSO_AUTH_TOKEN is not set.");
+    // However, failing here breaks the build module load.
+    // We will log error but return undefined adapter, causing runtime error later (caught by UI).
+    console.error("MISSING TURSO ENV VARS: TURSO_DATABASE_URL or TURSO_AUTH_TOKEN is not set.");
 }
 
 export const prisma =
