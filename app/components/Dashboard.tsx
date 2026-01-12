@@ -41,11 +41,27 @@ export default function Dashboard({ members, search, action }: { members: any[],
         return joinedDate.getMonth() === currentMonth;
     }).length;
 
+    // Calculate Today's Revenue
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dailyRevenue = members.reduce((acc, member) => {
+        const latestSub = member.subscriptions && member.subscriptions[0];
+        if (latestSub) {
+            const subDate = new Date(latestSub.startDate);
+            subDate.setHours(0, 0, 0, 0);
+            if (subDate.getTime() === today.getTime()) {
+                return acc + latestSub.price;
+            }
+        }
+        return acc;
+    }, 0);
+
     const stats = [
         {
             title: "Jami A'zolar",
             value: totalMembers.toLocaleString(),
-            change: "+12.5%",
+            change: "+12.5%", // This usually requires historical data, keeping static fallback or simple logic
             icon: Users,
             color: "text-orange-500",
             bg: "bg-zinc-900 border-orange-500/20",
@@ -64,7 +80,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
         },
         {
             title: "Bugungi Tushum",
-            value: "4 200 000",
+            value: dailyRevenue.toLocaleString(),
             suffix: "so'm",
             change: "+24%",
             icon: CreditCard,
@@ -75,11 +91,23 @@ export default function Dashboard({ members, search, action }: { members: any[],
         },
     ];
 
-    // Gender distribution (Mock data for now, could be real if we had gender field)
-    const genderData = [
-        { name: "Erkaklar", value: 65, color: "#f97316" }, // Orange 500
-        { name: "Ayollar", value: 35, color: "#52525b" }, // Zinc 600
-    ];
+    // Plan distribution (Replaces Gender data since we don't have gender DB field)
+    const planCounts: Record<string, number> = {};
+    members.forEach(m => {
+        const planName = m.subscriptions && m.subscriptions[0] ? m.subscriptions[0].plan : 'Obunasiz';
+        planCounts[planName] = (planCounts[planName] || 0) + 1;
+    });
+
+    const planData = Object.keys(planCounts).map((key, index) => ({
+        name: key,
+        value: planCounts[key],
+        color: index === 0 ? "#f97316" : index === 1 ? "#3b82f6" : "#52525b" // Orange, Blue, Zinc
+    }));
+
+    // Fallback if no data
+    if (planData.length === 0) {
+        planData.push({ name: "Ma'lumot yo'q", value: 1, color: "#52525b" });
+    }
 
     return (
         <DashboardLayout>
@@ -118,17 +146,17 @@ export default function Dashboard({ members, search, action }: { members: any[],
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Gender Chart */}
+                    {/* Plan Distribution Chart */}
                     <div className="lg:col-span-1 bg-zinc-900 border border-white/5 p-6 rounded-2xl">
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
-                            Jinslar Bo'yicha
+                            Tariflar Bo'yicha
                         </h3>
                         <div className="h-64 relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={genderData}
+                                        data={planData}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -136,7 +164,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {genderData.map((entry, index) => (
+                                        {planData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                                         ))}
                                     </Pie>
@@ -147,11 +175,11 @@ export default function Dashboard({ members, search, action }: { members: any[],
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="flex justify-center gap-6 mt-4">
-                            {genderData.map((item, index) => (
+                        <div className="flex justify-center gap-6 mt-4 flex-wrap">
+                            {planData.map((item, index) => (
                                 <div key={index} className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-sm text-zinc-400">{item.name} ({item.value}%)</span>
+                                    <span className="text-sm text-zinc-400">{item.name} ({item.value})</span>
                                 </div>
                             ))}
                         </div>
