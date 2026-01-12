@@ -3,6 +3,8 @@ import { getAttendance } from "../actions";
 import { CalendarCheck, User, Clock, Search } from "lucide-react";
 import Image from "next/image";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AttendancePage({ searchParams }: { searchParams: { date?: string } }) {
     const dateParam = searchParams?.date ? new Date(searchParams.date) : new Date();
     const records = await getAttendance(dateParam);

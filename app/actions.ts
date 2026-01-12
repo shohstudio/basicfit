@@ -21,7 +21,7 @@ export async function getMembers(query: string = "") {
     });
 
     // Dynamic Status Calculation
-    return members.map(member => {
+    return members.map((member: any) => {
         const latestSub = member.subscriptions[0];
         let computedStatus = member.status;
 
