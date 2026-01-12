@@ -1,11 +1,11 @@
 "use client";
-// Dashboard Component with Client Logic
 import { useState } from "react";
+import Link from "next/link";
+import { Users, CreditCard, TrendingUp, Clock } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
-
-// ... (keep existing imports and mock data, but remove unused ones if needed)
 
 export default function Dashboard({ members, search, action }: { members: any[], search: string, action?: string }) {
     // Modal State Logic (Duplicated from MembersView for full functionality)
@@ -33,19 +33,59 @@ export default function Dashboard({ members, search, action }: { members: any[],
 
     // Calculate real stats from members data
     const totalMembers = members.length;
-    const activeMembers = members.filter(m => m.status === 'ACTIVE').length;
-    // ... (keep stats calculations)
 
-    // ... (keep existing stats array definition)
+    // Calculate new members (joined this month)
+    const currentMonth = new Date().getMonth();
+    const newMembersCount = members.filter(m => {
+        const joinedDate = new Date(m.createdAt);
+        return joinedDate.getMonth() === currentMonth;
+    }).length;
 
-    // ... (keep existing genderData definition)
+    const stats = [
+        {
+            title: "Jami A'zolar",
+            value: totalMembers.toLocaleString(),
+            change: "+12.5%",
+            icon: Users,
+            color: "text-orange-500",
+            bg: "bg-zinc-900 border-orange-500/20",
+            trend: "up",
+            href: "/members"
+        },
+        {
+            title: "Yangi A'zolar",
+            value: newMembersCount.toLocaleString(),
+            change: "+5%",
+            icon: Users,
+            color: "text-blue-500",
+            bg: "bg-zinc-900 border-blue-500/20",
+            trend: "up",
+            href: "/members"
+        },
+        {
+            title: "Bugungi Tushum",
+            value: "4 200 000",
+            suffix: "so'm",
+            change: "+24%",
+            icon: CreditCard,
+            color: "text-violet-500",
+            bg: "bg-zinc-900 border-violet-500/20",
+            trend: "up",
+            href: "/finance"
+        },
+    ];
+
+    // Gender distribution (Mock data for now, could be real if we had gender field)
+    const genderData = [
+        { name: "Erkaklar", value: 65, color: "#f97316" }, // Orange 500
+        { name: "Ayollar", value: 35, color: "#52525b" }, // Zinc 600
+    ];
 
     return (
         <DashboardLayout>
             <div className="space-y-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* ... (keep stats mapping) */}
                     {stats.map((stat, index) => (
                         <Link
                             key={index}
@@ -80,7 +120,6 @@ export default function Dashboard({ members, search, action }: { members: any[],
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Gender Chart */}
                     <div className="lg:col-span-1 bg-zinc-900 border border-white/5 p-6 rounded-2xl">
-                        {/* ... (keep chart code) ... */}
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
                             Jinslar Bo'yicha
