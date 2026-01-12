@@ -11,7 +11,21 @@ export default async function Home({
   const params = await searchParams; // Next.js 15+ needs await for searchParams
   const query = params.q || "";
   const action = params.action || "";
-  const members = await getMembers(query);
 
-  return <Dashboard members={members} search={query} action={action} />;
+  try {
+    const members = await getMembers(query);
+    return <Dashboard members={members} search={query} action={action} />;
+  } catch (error: any) {
+    return (
+      <div className="p-10 text-white">
+        <h1 className="text-2xl font-bold text-red-500 mb-4">Xatolik yuz berdi (Debugging)</h1>
+        <pre className="bg-zinc-900 p-4 rounded overflow-auto border border-zinc-800">
+          {error.message}
+          {'\n\n'}
+          {error.stack}
+        </pre>
+        <p className="mt-4 text-zinc-400">Ushbu xabarni Dasturchiga yuboring.</p>
+      </div>
+    );
+  }
 }
