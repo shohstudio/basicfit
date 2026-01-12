@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+  role     String @default("ADMIN")
+}
+
+model Member {
+  id            String         @id @default(uuid())
+  fullName      String
+  imageUrl      String?
+  email         String?        @unique
+  phone         String
+  status        String         @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+  attendance    Attendance[]
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  plan      String   // "Standard", "Premium" etc
+  price     Float
+  startDate DateTime
+  endDate   DateTime
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  checkIn   DateTime @default(now())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+}
+
+model Plan {
+  id          String   @id @default(uuid())
+  name        String
+  price       Int
+  duration    Int      // Davomiyligi (kun)
+  features    String?  // Vergul bilan ajratilgan
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
