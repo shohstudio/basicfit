@@ -1,0 +1,39 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "
+    echo 'Configuring Nginx for IP Access...'
+    
+    # Define the new server block for IP
+    cat << 'EOF' >> /etc/nginx/sites-available/basicfit
+
+server {
+    listen 80;
+    server_name 138.249.7.221;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+
+    # Check config and reload
+    nginx -t && systemctl reload nginx && echo 'SUCCESS: Nginx reloaded' || echo 'FAILURE: Config error'
+    
+    echo 'Testing IP access locally...'
+    curl -I http://138.249.7.221 || echo 'Local test failed'
+"
+
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}

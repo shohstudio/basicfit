@@ -1,0 +1,30 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+
+# SSH and run the diagnostic commands
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "
+    echo '================ DIANOSTIC REPORT V2 ================'
+    echo '1. Nginx Status:'
+    systemctl status nginx --no-pager | head -n 10
+    echo '--------------------------------------------------'
+    echo '2. Listening Ports (ss):'
+    ss -tulpn | grep -E ':(80|443|3000)' || echo 'ss command failed or no ports'
+    echo '--------------------------------------------------'
+    echo '3. Nginx Config Content:'
+    ls -l /etc/nginx/sites-enabled/
+    echo '--- Content of /etc/nginx/sites-enabled/basicfit ---'
+    cat /etc/nginx/sites-enabled/basicfit || echo 'File not found'
+    echo '--------------------------------------------------'
+    echo '4. Curl Localhost:'
+    curl -I http://localhost:80 || echo 'Curl localhost failed'
+    echo '================ END REPORT ======================'
+"
+
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}

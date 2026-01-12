@@ -12,7 +12,7 @@ export async function login(prevState: any, formData: FormData) {
         const cookieStore = await cookies();
         cookieStore.set('auth_session', 'authenticated', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Allow HTTP for IP access
             maxAge: 60 * 60 * 24 * 7, // 1 week
             path: '/',
         });

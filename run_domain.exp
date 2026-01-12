@@ -1,0 +1,21 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+set setup_script "setup_domain.sh"
+
+# SCP the setup script
+spawn scp -o StrictHostKeyChecking=no $setup_script $user@$ip:/root/$setup_script
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}
+
+# SSH and run the script
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "bash /root/$setup_script"
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}

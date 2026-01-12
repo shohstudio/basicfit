@@ -1,0 +1,34 @@
+#!/usr/bin/expect -f
+
+set timeout 20
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "
+    echo '================ LOG REPORT ================'
+    echo '1. Fail2Ban Status:'
+    if command -v fail2ban-client &> /dev/null; then
+        fail2ban-client status
+        # Check sshd jail specifically if it exists, or nginx-http-auth
+        fail2ban-client status sshd 2>/dev/null || echo 'sshd jail not found'
+        fail2ban-client status nginx-http-auth 2>/dev/null || echo 'nginx-http-auth jail not found'
+    else
+        echo 'Fail2Ban NOT installed'
+    fi
+    echo '--------------------------------------------------'
+    echo '2. Recent Nginx Access Log (Last 20 lines):'
+    tail -n 20 /var/log/nginx/access.log
+    echo '--------------------------------------------------'
+    echo '3. Recent Nginx Error Log (Last 20 lines):'
+    tail -n 20 /var/log/nginx/error.log
+    echo '--------------------------------------------------'
+    echo '4. Check for Cloudflare Headers in Logs:'
+    grep -i 'CF-Ray' /var/log/nginx/access.log | head -n 5 || echo 'No Cloudflare headers found in recent logs'
+    echo '================ END REPORT ======================'
+"
+
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}
