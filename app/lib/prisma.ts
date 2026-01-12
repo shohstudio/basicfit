@@ -12,7 +12,14 @@ const isProduction = process.env.NODE_ENV === "production";
 let adapter;
 
 if (url && authToken) {
-    const turso = createClient({ url, authToken });
+    // Auto-fix protocol for serverless environments (libsql:// -> https://)
+    const finalUrl = url.replace("libsql://", "https://");
+    console.log("Initializing Turso Client with URL:", finalUrl.split("://")[0] + "://... (masked)");
+
+    const turso = createClient({
+        url: finalUrl,
+        authToken
+    });
     adapter = new PrismaLibSQL(turso);
 } else if (!isProduction) {
     const turso = createClient({ url: "file:dev.db" });
