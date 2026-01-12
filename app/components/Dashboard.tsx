@@ -1,86 +1,48 @@
-"use client";
+import { useState } from "react";
+import MemberList from "./MemberList";
+import MemberForm from "./MemberForm";
 
-import Link from "next/link";
-import { Users, CreditCard, Activity, TrendingUp, Clock } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import DashboardLayout from "./DashboardLayout";
-
-// Mock data for Expected Visits logic
-const expectedVisits = [
-    { name: "Ali Valiyev", plan: "Har kuni", status: "Kutilmoqda", time: "08:00 - 10:00", image: "A" },
-    { name: "Vali G'aniyev", plan: "Kun ora (Toq kunlar)", status: "Kutilmoqda", time: "18:00 - 20:00", image: "V" },
-    { name: "Sardor Rahimov", plan: "Har kuni", status: "Kutilmoqda", time: "19:00", image: "S" },
-    { name: "Malika Karimova", plan: "Kun ora (Juft kunlar)", status: "Kutilmoqda", time: "09:00", image: "M" },
-    { name: "Jamshid Tursunov", plan: "Har kuni", status: "Keldi", time: "07:30", image: "J", arrived: true },
-];
+// ... (keep existing imports and mock data, but remove unused ones if needed)
 
 export default function Dashboard({ members, search, action }: { members: any[], search: string, action?: string }) {
+    // Modal State Logic (Duplicated from MembersView for full functionality)
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingMember, setEditingMember] = useState<any>(null);
+    const [modalMode, setModalMode] = useState<'create' | 'edit' | 'renew'>('create');
+
+    const openAddModal = () => {
+        setEditingMember(null);
+        setModalMode('create');
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (member: any) => {
+        setEditingMember(member);
+        setModalMode('edit');
+        setIsModalOpen(true);
+    };
+
+    const openRenewModal = (member: any) => {
+        setEditingMember(member);
+        setModalMode('renew');
+        setIsModalOpen(true);
+    };
 
     // Calculate real stats from members data
     const totalMembers = members.length;
     const activeMembers = members.filter(m => m.status === 'ACTIVE').length;
-    const inactiveMembers = members.filter(m => m.status === 'INACTIVE').length;
+    // ... (keep stats calculations)
 
-    // Calculate new members (joined this month)
-    const currentMonth = new Date().getMonth();
-    const newMembersCount = members.filter(m => {
-        const joinedDate = new Date(m.createdAt);
-        return joinedDate.getMonth() === currentMonth;
-    }).length;
+    // ... (keep existing stats array definition)
 
-    // Calculate expiring members (active members ending within 5 days)
-    // In real app: members.filter(m => hasExpiringSubscription(m))
-    const expiringMembers = 5; // Placeholder for now
-
-    // Dummy calculations for revenue/growth since we don't have historical data yet
-    // In a real app, we'd fetch these from the backend
-    // Dummy calculations for revenue/growth since we don't have historical data yet
-    // In a real app, we'd fetch these from the backend
-    const stats = [
-        {
-            title: "Jami A'zolar",
-            value: totalMembers.toLocaleString(),
-            change: "+12.5%",
-            icon: Users,
-            color: "text-orange-500",
-            bg: "bg-zinc-900 border-orange-500/20",
-            trend: "up",
-            href: "/members"
-        },
-        {
-            title: "Yangi A'zolar",
-            value: newMembersCount.toLocaleString(),
-            change: "+5%",
-            icon: Users,
-            color: "text-blue-500",
-            bg: "bg-zinc-900 border-blue-500/20",
-            trend: "up",
-            href: "/members"
-        },
-        {
-            title: "Bugungi Tushum",
-            value: "4 200 000",
-            suffix: "so'm",
-            change: "+24%",
-            icon: CreditCard,
-            color: "text-violet-500",
-            bg: "bg-zinc-900 border-violet-500/20",
-            trend: "up",
-            href: "/finance"
-        },
-    ];
-
-    // Gender distribution (Mock data for now, could be real if we had gender field)
-    const genderData = [
-        { name: "Erkaklar", value: 65, color: "#f97316" }, // Orange 500
-        { name: "Ayollar", value: 35, color: "#52525b" }, // Zinc 600
-    ];
+    // ... (keep existing genderData definition)
 
     return (
         <DashboardLayout>
             <div className="space-y-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* ... (keep stats mapping) */}
                     {stats.map((stat, index) => (
                         <Link
                             key={index}
@@ -115,6 +77,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Gender Chart */}
                     <div className="lg:col-span-1 bg-zinc-900 border border-white/5 p-6 rounded-2xl">
+                        {/* ... (keep chart code) ... */}
                         <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                             <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
                             Jinslar Bo'yicha
@@ -152,56 +115,37 @@ export default function Dashboard({ members, search, action }: { members: any[],
                         </div>
                     </div>
 
-                    {/* Expected Visits Widget */}
-                    <div className="lg:col-span-2 bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
+                    {/* REPLACED EXPECTED VISITS WITH MEMBER LIST FOR DASHBOARD */}
+                    <div className="lg:col-span-2 bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl overflow-hidden">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-white">Bugungi Kutilayotgan Tashriflar</h3>
-                                <p className="text-xs text-zinc-400 mt-1">Reja bo'yicha bugun kelishi kerak bo'lgan a'zolar</p>
+                                <h3 className="text-lg font-bold text-white">So'nggi Ro'yxatdan O'tganlar</h3>
+                                <p className="text-xs text-zinc-400 mt-1">Oxirgi qo'shilgan a'zolar ro'yxati</p>
                             </div>
-                            <button className="text-xs text-cyan-400 hover:text-cyan-300 font-medium uppercase tracking-wider">
-                                Barchasini ko'rish
+                            <button
+                                onClick={openAddModal}
+                                className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-colors"
+                            >
+                                + Yangi A'zo
                             </button>
                         </div>
-                        <div className="space-y-3">
-                            {expectedVisits.map((visit, index) => (
-                                <div key={index} className={`flex items-center p-3 rounded-xl border transition-all group ${visit.arrived
-                                    ? "bg-green-500/5 border-green-500/20"
-                                    : "bg-white/5 hover:bg-white/10 border-white/5"
-                                    }`}>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white mr-4 ${visit.arrived ? "bg-green-500" : "bg-gradient-to-br from-blue-500 to-cyan-500"
-                                        }`}>
-                                        {visit.image}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className={`font-bold ${visit.arrived ? "text-green-400" : "text-white group-hover:text-cyan-400"}`}>
-                                                {visit.name}
-                                            </h4>
-                                            {visit.arrived && (
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 font-bold uppercase">Keldi</span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-3 text-xs text-zinc-400 mt-1">
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" /> {visit.time}
-                                            </span>
-                                            <span className="w-1 h-1 rounded-full bg-zinc-600"></span>
-                                            <span>{visit.plan}</span>
-                                        </div>
-                                    </div>
-                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors ${visit.arrived
-                                        ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                                        : "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20"
-                                        }`}>
-                                        {visit.arrived ? "Tasdiqlangan" : "Kirish"}
-                                    </button>
-                                </div>
-                            ))}
+
+                        {/* Use MemberList component but maybe limit it or just show all */}
+                        <div className="max-h-[400px] overflow-y-auto">
+                            <MemberList members={members} onEdit={openEditModal} onRenew={openRenewModal} />
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modal for Add/Edit/Renew - accessible from Dashboard now too */}
+            {isModalOpen && (
+                <MemberForm
+                    onClose={() => setIsModalOpen(false)}
+                    initialData={editingMember}
+                    mode={modalMode}
+                />
+            )}
         </DashboardLayout>
     );
 }
