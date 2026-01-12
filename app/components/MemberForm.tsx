@@ -60,22 +60,30 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
         // Add image to formData
         formData.set("imageUrl", image);
 
+        let result;
+
         if (mode === 'edit' && initialData) {
-            await updateMember(initialData.id, formData);
+            result = await updateMember(initialData.id, formData);
         } else if (mode === 'renew' && initialData) {
             formData.set("plan", plan);
             formData.set("price", price.toString());
             formData.set("startDate", today.toISOString());
             formData.set("endDate", nextMonth.toISOString());
-            await renewSubscription(initialData.id, formData);
+            result = await renewSubscription(initialData.id, formData);
         } else {
             // Create
             formData.set("plan", plan);
             formData.set("price", price.toString());
             formData.set("startDate", today.toISOString());
             formData.set("endDate", nextMonth.toISOString());
-            await createMember(formData);
+            result = await createMember(formData);
         }
+
+        if (result && !result.success) {
+            alert(result.message);
+            return;
+        }
+
         formRef.current?.reset();
         onClose();
     };

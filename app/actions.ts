@@ -40,48 +40,54 @@ export async function getMembers(query: string = "") {
 }
 
 export async function createMember(formData: FormData) {
-    const fullName = formData.get("fullName") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const imageUrl = formData.get("imageUrl") as string;
+    try {
+        const fullName = formData.get("fullName") as string;
+        const email = formData.get("email") as string;
+        const phone = formData.get("phone") as string;
+        const imageUrl = formData.get("imageUrl") as string;
 
-    // Subscription Data
-    const plan = formData.get("plan") as string;
-    const price = parseFloat(formData.get("price") as string);
-    const startDate = new Date(formData.get("startDate") as string);
-    const endDate = new Date(formData.get("endDate") as string);
+        // Subscription Data
+        const plan = formData.get("plan") as string;
+        const price = parseFloat(formData.get("price") as string);
+        const startDate = new Date(formData.get("startDate") as string);
+        const endDate = new Date(formData.get("endDate") as string);
 
-    if (!fullName || !phone) {
-        throw new Error("Missing required fields");
-    }
+        if (!fullName || !phone) {
+            return { success: false, message: "Ism va Telefon raqami majburiy!" };
+        }
 
-    // Transaction: Create Member AND Subscription
-    await prisma.$transaction(async (tx) => {
-        const member = await tx.member.create({
-            data: {
-                fullName,
-                email: email || null,
-                phone,
-                imageUrl: imageUrl || null,
-                status: "ACTIVE", // Initially active upon payment
-            },
+        // Transaction: Create Member AND Subscription
+        await prisma.$transaction(async (tx) => {
+            const member = await tx.member.create({
+                data: {
+                    fullName,
+                    email: email || null,
+                    phone,
+                    imageUrl: imageUrl || null,
+                    status: "ACTIVE", // Initially active upon payment
+                },
+            });
+
+            if (plan) {
+                await tx.subscription.create({
+                    data: {
+                        plan,
+                        price,
+                        startDate,
+                        endDate,
+                        memberId: member.id
+                    }
+                });
+            }
         });
 
-        if (plan) {
-            await tx.subscription.create({
-                data: {
-                    plan,
-                    price,
-                    startDate,
-                    endDate,
-                    memberId: member.id
-                }
-            });
-        }
-    });
-
-    revalidatePath("/");
-    revalidatePath("/members");
+        revalidatePath("/");
+        revalidatePath("/members");
+        return { success: true, message: "Muvaffaqiyatli qo'shildi!" };
+    } catch (error: any) {
+        console.error("CREATE MEMBER ERROR:", error);
+        return { success: false, message: error.message || "Tizim xatoligi yuz berdi" };
+    }
 }
 
 export async function deleteMember(id: string) {
@@ -97,56 +103,68 @@ export async function deleteMember(id: string) {
 }
 
 export async function updateMember(id: string, formData: FormData) {
-    const fullName = formData.get("fullName") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const imageUrl = formData.get("imageUrl") as string;
+    try {
+        const fullName = formData.get("fullName") as string;
+        const email = formData.get("email") as string;
+        const phone = formData.get("phone") as string;
+        const imageUrl = formData.get("imageUrl") as string;
 
-    if (!fullName || !phone) {
-        throw new Error("Missing required fields");
+        if (!fullName || !phone) {
+            return { success: false, message: "Ism va Telefon raqami majburiy!" };
+        }
+
+        await prisma.member.update({
+            where: { id },
+            data: {
+                fullName,
+                email: email || null,
+                phone,
+                imageUrl: imageUrl || undefined, // Only update if provided
+            },
+        });
+
+        revalidatePath("/");
+        revalidatePath("/members");
+        return { success: true, message: "Tahrirlandi!" };
+    } catch (error: any) {
+        console.error("UPDATE MEMBER ERROR:", error);
+        return { success: false, message: error.message || "Xatolik yuz berdi" };
     }
-
-    await prisma.member.update({
-        where: { id },
-        data: {
-            fullName,
-            email: email || null,
-            phone,
-            imageUrl: imageUrl || undefined, // Only update if provided
-        },
-    });
-
-    revalidatePath("/");
-    revalidatePath("/members");
 }
 
 export async function renewSubscription(memberId: string, formData: FormData) {
-    const plan = formData.get("plan") as string;
-    const price = parseFloat(formData.get("price") as string);
-    const startDate = new Date(formData.get("startDate") as string);
-    const endDate = new Date(formData.get("endDate") as string);
+    try {
+        const plan = formData.get("plan") as string;
+        const price = parseFloat(formData.get("price") as string);
+        const startDate = new Date(formData.get("startDate") as string);
+        const endDate = new Date(formData.get("endDate") as string);
 
-    await prisma.$transaction(async (tx) => {
-        // Create new subscription
-        await tx.subscription.create({
-            data: {
-                plan,
-                price,
-                startDate,
-                endDate,
-                memberId: memberId
-            }
+        await prisma.$transaction(async (tx) => {
+            // Create new subscription
+            await tx.subscription.create({
+                data: {
+                    plan,
+                    price,
+                    startDate,
+                    endDate,
+                    memberId: memberId
+                }
+            });
+
+            // Update member status to ACTIVE
+            await tx.member.update({
+                where: { id: memberId },
+                data: { status: "ACTIVE" }
+            });
         });
 
-        // Update member status to ACTIVE
-        await tx.member.update({
-            where: { id: memberId },
-            data: { status: "ACTIVE" }
-        });
-    });
-
-    revalidatePath("/");
-    revalidatePath("/members");
+        revalidatePath("/");
+        revalidatePath("/members");
+        return { success: true, message: "Obuna yangilandi!" };
+    } catch (error: any) {
+        console.error("RENEW ERROR:", error);
+        return { success: false, message: error.message || "Xatolik yuz berdi" };
+    }
 }
 
 export async function scanMember(id: string) {
