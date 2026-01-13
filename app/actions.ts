@@ -268,3 +268,43 @@ export async function getAttendance(date?: Date) {
         }
     });
 }
+
+// --- STATS ACTIONS ---
+
+export async function getDailyStats() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const subscriptions = await prisma.subscription.findMany({
+        where: {
+            startDate: {
+                gte: today,
+                lt: tomorrow
+            }
+        },
+        include: {
+            member: {
+                select: {
+                    fullName: true,
+                    imageUrl: true
+                }
+            }
+        }
+    });
+
+    const totalRevenue = subscriptions.reduce((acc, sub) => acc + sub.price, 0);
+
+    return {
+        revenue: totalRevenue,
+        transactions: subscriptions.map(sub => ({
+            id: sub.id,
+            member: sub.member.fullName,
+            image: sub.member.imageUrl,
+            amount: sub.price,
+            plan: sub.plan,
+            date: sub.startDate
+        }))
+    };
+}

@@ -7,11 +7,14 @@ import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
 
-export default function Dashboard({ members, search, action }: { members: any[], search: string, action?: string }) {
+export default function Dashboard({ members, search, action, dailyStats }: { members: any[], search: string, action?: string, dailyStats?: any }) {
     // Modal State Logic (Duplicated from MembersView for full functionality)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<any>(null);
     const [modalMode, setModalMode] = useState<'create' | 'edit' | 'renew'>('create');
+
+    // Income Details Modal
+    const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
 
     const openAddModal = () => {
         setEditingMember(null);
@@ -41,21 +44,8 @@ export default function Dashboard({ members, search, action }: { members: any[],
         return joinedDate.getMonth() === currentMonth;
     }).length;
 
-    // Calculate Today's Revenue
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dailyRevenue = members.reduce((acc, member) => {
-        const latestSub = member.subscriptions && member.subscriptions[0];
-        if (latestSub) {
-            const subDate = new Date(latestSub.startDate);
-            subDate.setHours(0, 0, 0, 0);
-            if (subDate.getTime() === today.getTime()) {
-                return acc + latestSub.price;
-            }
-        }
-        return acc;
-    }, 0);
+    // Calculate Today's Revenue (Use server provided stats or fallback)
+    const dailyRevenue = dailyStats?.revenue || 0;
 
     const stats = [
         {
@@ -87,7 +77,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
             color: "text-violet-500",
             bg: "bg-zinc-900 border-violet-500/20",
             trend: "up",
-            href: "/finance"
+            onClick: () => setIsIncomeModalOpen(true) // Open details modal on click
         },
     ];
 
@@ -115,12 +105,17 @@ export default function Dashboard({ members, search, action }: { members: any[],
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {stats.map((stat, index) => (
-                        <Link
+                        <div
                             key={index}
-                            href={stat.href}
+                            onClick={stat.onClick}
                             className={`relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 hover:bg-zinc-800/80 hover:scale-105 group ${stat.bg} cursor-pointer`}
                         >
-                            <div className="flex justify-between items-start mb-4 relative z-10">
+                            {/* Wrap entire card content in Link if href exists, otherwise just div */}
+                            {stat.href ? (
+                                <Link href={stat.href} className="absolute inset-0 z-20"></Link>
+                            ) : null}
+
+                            <div className="flex justify-between items-start mb-4 relative z-10 pointer-events-none">
                                 <div className={`p-2 rounded-lg bg-black/40 ${stat.color}`}>
                                     <stat.icon className="w-5 h-5" />
                                 </div>
@@ -130,7 +125,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
                                     <TrendingUp className={`w-3 h-3 ml-1 ${stat.trend === 'down' && 'rotate-180'}`} />
                                 </span>
                             </div>
-                            <div className="relative z-10">
+                            <div className="relative z-10 pointer-events-none">
                                 <h3 className="text-zinc-400 text-sm font-medium mb-1">{stat.title}</h3>
                                 <p className="text-3xl font-black text-white tracking-tight group-hover:text-orange-500 transition-colors">
                                     {stat.value}
@@ -141,7 +136,7 @@ export default function Dashboard({ members, search, action }: { members: any[],
 
                             {/* Decorative glow */}
                             <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-0 group-hover:opacity-10 blur-2xl transition-opacity duration-500 ${stat.color.replace('text-', 'bg-')}`}></div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
 
@@ -215,6 +210,63 @@ export default function Dashboard({ members, search, action }: { members: any[],
                     initialData={editingMember}
                     mode={modalMode}
                 />
+            )}
+
+            {/* Income Details Modal */}
+            {isIncomeModalOpen && dailyStats && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white">Bugungi Tushum Tafsilotlari</h2>
+                            <button
+                                onClick={() => setIsIncomeModalOpen(false)}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center p-4 bg-violet-500/10 border border-violet-500/20 rounded-xl">
+                                <span className="text-violet-200">Jami Tushum:</span>
+                                <span className="text-2xl font-bold text-violet-400">{dailyStats.revenue.toLocaleString()} so'm</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">To'lovlar Ro'yxati</h3>
+                                {dailyStats.transactions && dailyStats.transactions.length > 0 ? (
+                                    dailyStats.transactions.map((tx: any) => (
+                                        <div key={tx.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
+                                                    {tx.image ? (
+                                                        <img src={tx.image} alt={tx.member} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-xs font-bold text-zinc-400">{tx.member.charAt(0)}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-white">{tx.member}</p>
+                                                    <p className="text-xs text-zinc-500">{tx.plan}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-white">{tx.amount.toLocaleString()} so'm</p>
+                                                <p className="text-[10px] text-zinc-500">{new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8 text-zinc-500">
+                                        Bugun hech qanday to'lov bo'lmagan
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </DashboardLayout>
     );

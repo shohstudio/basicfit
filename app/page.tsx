@@ -1,5 +1,5 @@
 import Dashboard from "./components/Dashboard";
-import { getMembers } from "./actions";
+import { getMembers, getDailyStats } from "./actions";
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,8 @@ export default async function Home({
 
   try {
     const members = await getMembers(query);
-    return <Dashboard members={members} search={query} action={action} />;
+    const dailyStats = await getDailyStats();
+    return <Dashboard members={members} search={query} action={action} dailyStats={dailyStats} />;
   } catch (error: any) {
     return (
       <div className="p-10 text-white">
