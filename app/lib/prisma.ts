@@ -34,7 +34,7 @@ if (url && authToken) {
 export const prisma =
     globalForPrisma.prisma ||
     new PrismaClient({
-        adapter,
+        ...(adapter ? { adapter } : {}),
         log: ["query"],
     });
 
