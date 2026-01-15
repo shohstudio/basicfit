@@ -18,14 +18,14 @@ export default async function Home({
     return <Dashboard members={members} search={query} action={action} dailyStats={dailyStats} />;
   } catch (error: any) {
     return (
-      <div className="p-10 text-white">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">Xatolik yuz berdi (Debugging)</h1>
-        <pre className="bg-zinc-900 p-4 rounded overflow-auto border border-zinc-800">
+      <div className="p-10 text-gray-900">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Xatolik yuz berdi (Debugging)</h1>
+        <pre className="bg-gray-50 p-4 rounded overflow-auto border border-gray-200">
           {error.message}
           {'\n\n'}
           {error.stack}
         </pre>
-        <p className="mt-4 text-zinc-400">Ushbu xabarni Dasturchiga yuboring.</p>
+        <p className="mt-4 text-gray-500">Ushbu xabarni Dasturchiga yuboring.</p>
       </div>
     );
   }
