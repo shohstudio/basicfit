@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Users, CreditCard, TrendingUp, Clock } from "lucide-react";
+import { Users, CreditCard, TrendingUp, Clock, CheckSquare, CalendarCheck } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
@@ -102,43 +102,124 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
     return (
         <DashboardLayout>
             <div className="space-y-8">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stats.map((stat, index) => (
-                        <div
-                            key={index}
-                            onClick={stat.onClick}
-                            className={`relative overflow-hidden p-6 rounded-2xl border transition-all duration-300 hover:bg-zinc-800/80 hover:scale-105 group ${stat.bg} cursor-pointer`}
-                        >
-                            {/* Wrap entire card content in Link if href exists, otherwise just div */}
-                            {stat.href ? (
-                                <Link href={stat.href} className="absolute inset-0 z-20"></Link>
-                            ) : null}
-
-                            <div className="flex justify-between items-start mb-4 relative z-10 pointer-events-none">
-                                <div className={`p-2 rounded-lg bg-black/40 ${stat.color}`}>
-                                    <stat.icon className="w-5 h-5" />
-                                </div>
-                                <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${stat.trend === 'up' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                                    }`}>
-                                    {stat.change}
-                                    <TrendingUp className={`w-3 h-3 ml-1 ${stat.trend === 'down' && 'rotate-180'}`} />
-                                </span>
-                            </div>
-                            <div className="relative z-10 pointer-events-none">
-                                <h3 className="text-zinc-400 text-sm font-medium mb-1">{stat.title}</h3>
-                                <p className="text-3xl font-black text-white tracking-tight group-hover:text-orange-500 transition-colors">
-                                    {stat.value}
-                                    {/* @ts-ignore */}
-                                    {stat.suffix && <span className="text-sm font-medium ml-1 text-zinc-500">{stat.suffix}</span>}
-                                </p>
-                            </div>
-
-                            {/* Decorative glow */}
-                            <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-0 group-hover:opacity-10 blur-2xl transition-opacity duration-500 ${stat.color.replace('text-', 'bg-')}`}></div>
-                        </div>
-                    ))}
+                {/* Header Greeting */}
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Good evening Admin</h2>
                 </div>
+
+                {/* Main Action Cards (Row 1) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Add Member Card */}
+                    <div onClick={openAddModal} className="cursor-pointer bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center h-40 group">
+                        <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <span className="text-2xl font-bold">+</span>
+                        </div>
+                        <h3 className="font-bold text-blue-500">Add Member</h3>
+                    </div>
+
+                    {/* Enquiries Card */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40">
+                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mb-4">
+                            <span className="text-xl font-bold">?</span>
+                        </div>
+                        <h3 className="font-bold text-blue-500">Enquiries</h3>
+                    </div>
+
+                    {/* Tasks Card */}
+                    <Link href="/tasks" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40 relative">
+                        {/* Badge */}
+                        <div className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">1</div>
+                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mb-4">
+                            <CheckSquare className="w-6 h-6" /> // Assuming CheckSquare imported
+                        </div>
+                        <h3 className="font-bold text-blue-500">Tasks</h3>
+                    </Link>
+
+                    {/* Attendances Card */}
+                    <Link href="/attendance" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40">
+                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mb-4">
+                            <CalendarCheck className="w-6 h-6" /> // Assuming CalendarCheck imported
+                        </div>
+                        <h3 className="font-bold text-blue-500">Attendances</h3>
+                    </Link>
+                </div>
+
+                {/* Stats Grid (Row 2) - Vertical Layout matching NitroFIT */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+                    {/* New Members */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">New Members</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">{newMembersCount}</div>
+                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (60%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            New customers from<br />15 Dec to 15 Jan<br />compared with 12<br />Nov to 14 Dec
+                        </p>
+                    </div>
+
+                    {/* Visits Today */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">Visits Today</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">0</div>
+                        <div className="text-green-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (0%) <TrendingUp className="w-3 h-3 ml-1" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            Successful visits<br />today so far<br />compared with the<br />same time on 16th<br />Sep 11:33 pm
+                        </p>
+                    </div>
+
+                    {/* Member Visits */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">Member Visits</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">4</div>
+                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (-88.24%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            Visits from 01 Jan<br />compared with 01<br />Dec to 15 Dec
+                        </p>
+                    </div>
+
+                    {/* Manual Bookings */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">Manual Bookings</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">12</div>
+                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (-82.86%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            Bookings from 01<br />Jan compared with<br />01 Dec to 15 Dec
+                        </p>
+                    </div>
+
+                    {/* Online Bookings */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">Online Bookings</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">10</div>
+                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (-73.68%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            Online bookings<br />from 01 Jan<br />compared with 01<br />Dec to 15 Dec
+                        </p>
+                    </div>
+
+                    {/* Online Signups */}
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <h3 className="text-gray-900 font-bold mb-4">Online Signups</h3>
+                        <div className="text-4xl font-black text-gray-900 mb-2">10</div>
+                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
+                            (-47.37%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                            New subscriptions<br />from 15 Dec to 15<br />Jan compared with<br />12 Nov to 14 Dec
+                        </p>
+                    </div>
+
+                </div>
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Plan Distribution Chart */}
