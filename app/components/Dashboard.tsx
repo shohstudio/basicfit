@@ -221,10 +221,11 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                 </div>
 
 
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Plan Distribution Chart */}
-                    <div className="lg:col-span-1 bg-zinc-900 border border-white/5 p-6 rounded-2xl">
-                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <div className="lg:col-span-1 bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                             <span className="w-1 h-6 bg-orange-500 rounded-full"></span>
                             Tariflar Bo'yicha
                         </h3>
@@ -245,8 +246,8 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
-                                        itemStyle={{ color: '#fff' }}
+                                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        itemStyle={{ color: '#111827', fontWeight: 600 }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -255,22 +256,22 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             {planData.map((item, index) => (
                                 <div key={index} className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-sm text-zinc-400">{item.name} ({item.value})</span>
+                                    <span className="text-sm text-gray-500 font-medium">{item.name} ({item.value})</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* REPLACED EXPECTED VISITS WITH MEMBER LIST FOR DASHBOARD */}
-                    <div className="lg:col-span-2 bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-2xl overflow-hidden">
+                    <div className="lg:col-span-2 bg-white border border-gray-200 p-6 rounded-2xl shadow-sm overflow-hidden">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-white">So'nggi Ro'yxatdan O'tganlar</h3>
-                                <p className="text-xs text-zinc-400 mt-1">Oxirgi qo'shilgan a'zolar ro'yxati</p>
+                                <h3 className="text-lg font-bold text-gray-900">So'nggi Ro'yxatdan O'tganlar</h3>
+                                <p className="text-xs text-gray-500 mt-1">Oxirgi qo'shilgan a'zolar ro'yxati</p>
                             </div>
                             <button
                                 onClick={openAddModal}
-                                className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-colors"
+                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-colors"
                             >
                                 + Yangi A'zo
                             </button>
@@ -295,52 +296,52 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
 
             {/* Income Details Modal */}
             {isIncomeModalOpen && dailyStats && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">Bugungi Tushum Tafsilotlari</h2>
+                            <h2 className="text-xl font-bold text-gray-900">Bugungi Tushum Tafsilotlari</h2>
                             <button
                                 onClick={() => setIsIncomeModalOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                             >
-                                <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center p-4 bg-violet-500/10 border border-violet-500/20 rounded-xl">
-                                <span className="text-violet-200">Jami Tushum:</span>
-                                <span className="text-2xl font-bold text-violet-400">{dailyStats.revenue.toLocaleString()} so'm</span>
+                            <div className="flex justify-between items-center p-4 bg-violet-50 border border-violet-100 rounded-xl">
+                                <span className="text-violet-700 font-medium">Jami Tushum:</span>
+                                <span className="text-2xl font-bold text-violet-600">{dailyStats.revenue.toLocaleString()} so'm</span>
                             </div>
 
                             <div className="space-y-2">
-                                <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">To'lovlar Ro'yxati</h3>
+                                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">To'lovlar Ro'yxati</h3>
                                 {dailyStats.transactions && dailyStats.transactions.length > 0 ? (
                                     dailyStats.transactions.map((tx: any) => (
-                                        <div key={tx.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors">
+                                        <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
+                                                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">
                                                     {tx.image ? (
                                                         <img src={tx.image} alt={tx.member} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <span className="text-xs font-bold text-zinc-400">{tx.member.charAt(0)}</span>
+                                                        <span className="text-xs font-bold text-gray-500">{tx.member.charAt(0)}</span>
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium text-white">{tx.member}</p>
-                                                    <p className="text-xs text-zinc-500">{tx.plan}</p>
+                                                    <p className="font-bold text-gray-900">{tx.member}</p>
+                                                    <p className="text-xs text-gray-500">{tx.plan}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-white">{tx.amount.toLocaleString()} so'm</p>
-                                                <p className="text-[10px] text-zinc-500">{new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                <p className="font-bold text-gray-900">{tx.amount.toLocaleString()} so'm</p>
+                                                <p className="text-[10px] text-gray-500">{new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-8 text-zinc-500">
+                                    <div className="text-center py-8 text-gray-500">
                                         Bugun hech qanday to'lov bo'lmagan
                                     </div>
                                 )}
