@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Users, CreditCard, TrendingUp, Clock, CheckSquare, CalendarCheck } from "lucide-react";
+import { Users, CreditCard, TrendingUp, CalendarCheck } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
@@ -117,23 +117,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         <h3 className="font-bold text-blue-500">Add Member</h3>
                     </div>
 
-                    {/* Enquiries Card */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40">
-                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mb-4">
-                            <span className="text-xl font-bold">?</span>
-                        </div>
-                        <h3 className="font-bold text-blue-500">Enquiries</h3>
-                    </div>
 
-                    {/* Tasks Card */}
-                    <Link href="/tasks" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40 relative">
-                        {/* Badge */}
-                        <div className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">1</div>
-                        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mb-4">
-                            <CheckSquare className="w-6 h-6" /> // Assuming CheckSquare imported
-                        </div>
-                        <h3 className="font-bold text-blue-500">Tasks</h3>
-                    </Link>
 
                     {/* Attendances Card */}
                     <Link href="/attendance" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40">
@@ -182,41 +166,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         </p>
                     </div>
 
-                    {/* Manual Bookings */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
-                        <h3 className="text-gray-900 font-bold mb-4">Manual Bookings</h3>
-                        <div className="text-4xl font-black text-gray-900 mb-2">12</div>
-                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
-                            (-82.86%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
-                        </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                            Bookings from 01<br />Jan compared with<br />01 Dec to 15 Dec
-                        </p>
-                    </div>
 
-                    {/* Online Bookings */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
-                        <h3 className="text-gray-900 font-bold mb-4">Online Bookings</h3>
-                        <div className="text-4xl font-black text-gray-900 mb-2">10</div>
-                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
-                            (-73.68%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
-                        </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                            Online bookings<br />from 01 Jan<br />compared with 01<br />Dec to 15 Dec
-                        </p>
-                    </div>
-
-                    {/* Online Signups */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
-                        <h3 className="text-gray-900 font-bold mb-4">Online Signups</h3>
-                        <div className="text-4xl font-black text-gray-900 mb-2">10</div>
-                        <div className="text-red-500 text-xs font-bold mb-4 flex items-center justify-center">
-                            (-47.37%) <TrendingUp className="w-3 h-3 ml-1 rotate-180" />
-                        </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                            New subscriptions<br />from 15 Dec to 15<br />Jan compared with<br />12 Nov to 14 Dec
-                        </p>
-                    </div>
 
                 </div>
 

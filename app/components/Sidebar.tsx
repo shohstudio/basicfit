@@ -31,8 +31,6 @@ export default function Sidebar() {
 
     const realMenuItems = [
         { name: "Dashboard", icon: LayoutDashboard, href: "/" },
-        { name: "Enquiries", icon: FileText, href: "/enquiries", disabled: true }, // Visual only
-        { name: "Tasks", icon: CheckSquare, href: "/tasks", disabled: true }, // Visual only
         { name: "Members", icon: Users, href: "/members" },
         { name: "Qr Scanner", icon: Scan, href: "/qr-scanner" },
         { name: "Attendances", icon: CalendarCheck, href: "/attendance" },
@@ -54,11 +52,11 @@ export default function Sidebar() {
                         return (
                             <Link
                                 key={item.href}
-                                href={item.disabled ? "#" : item.href}
+                                href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative ${isActive
                                     ? "bg-blue-50 text-blue-600 font-bold"
                                     : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                                    } ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    }`}
                             >
                                 <item.icon
                                     className={`w-5 h-5 transition-colors ${isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
