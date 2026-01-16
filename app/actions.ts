@@ -52,9 +52,23 @@ export async function createMember(formData: FormData) {
         const startDate = new Date(formData.get("startDate") as string);
         const endDate = new Date(formData.get("endDate") as string);
 
+
         if (!fullName || !phone) {
             return { success: false, message: "Ism va Telefon raqami majburiy!" };
         }
+
+        // Check for duplicate phone
+        const existingMember = await prisma.member.findFirst({
+            where: { phone }
+        });
+
+        if (existingMember) {
+            return {
+                success: false,
+                message: `Bu raqam bilan ${existingMember.fullName} ro'yxatdan o'tgan.`
+            };
+        }
+
 
         // Transaction: Create Member AND Subscription
         await prisma.$transaction(async (tx) => {
