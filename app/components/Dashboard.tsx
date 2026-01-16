@@ -1,17 +1,34 @@
-"use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users, CreditCard, TrendingUp, CalendarCheck } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
+import { getDailyStats } from "../actions";
 
 export default function Dashboard({ members, search, action, dailyStats }: { members: any[], search: string, action?: string, dailyStats?: any }) {
     // Modal State Logic (Duplicated from MembersView for full functionality)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<any>(null);
     const [modalMode, setModalMode] = useState<'create' | 'edit' | 'renew'>('create');
+
+    // Real-time Stats State
+    const [realtimeStats, setRealtimeStats] = useState(dailyStats || { revenue: 0, visitsCount: 0, transactions: [] });
+
+    // Polling Effect for Real-time Updates (every 5 seconds)
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const freshStats = await getDailyStats();
+                setRealtimeStats(freshStats);
+            } catch (error) {
+                console.error("Failed to fetch real-time stats:", error);
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     // Income Details Modal
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -45,7 +62,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
     }).length;
 
     // Calculate Today's Revenue (Use server provided stats or fallback)
-    const dailyRevenue = dailyStats?.revenue || 0;
+    const dailyRevenue = realtimeStats?.revenue || 0;
 
     const stats = [
         {
@@ -131,7 +148,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-2">
                             <TrendingUp className="w-6 h-6" />
                         </div>
-                        <div className="text-3xl font-black text-gray-900">{dailyStats.visitsCount || 0}</div>
+                        <div className="text-3xl font-black text-gray-900">{realtimeStats.visitsCount || 0}</div>
                         <h3 className="text-xs font-bold text-gray-500">Bugungi Tashriflar</h3>
                     </div>
 
@@ -220,7 +237,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
             )}
 
             {/* Income Details Modal */}
-            {isIncomeModalOpen && dailyStats && (
+            {isIncomeModalOpen && realtimeStats && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-lg p-6 max-h-[80vh] overflow-y-auto shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
@@ -238,13 +255,13 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         <div className="space-y-4">
                             <div className="flex justify-between items-center p-4 bg-violet-50 border border-violet-100 rounded-xl">
                                 <span className="text-violet-700 font-medium">Jami Tushum:</span>
-                                <span className="text-2xl font-bold text-violet-600">{dailyStats.revenue.toLocaleString()} so'm</span>
+                                <span className="text-2xl font-bold text-violet-600">{realtimeStats.revenue.toLocaleString()} so'm</span>
                             </div>
 
                             <div className="space-y-2">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">To'lovlar Ro'yxati</h3>
-                                {dailyStats.transactions && dailyStats.transactions.length > 0 ? (
-                                    dailyStats.transactions.map((tx: any) => (
+                                {realtimeStats.transactions && realtimeStats.transactions.length > 0 ? (
+                                    realtimeStats.transactions.map((tx: any) => (
                                         <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">
