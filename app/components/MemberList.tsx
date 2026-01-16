@@ -48,12 +48,13 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                                         <span
                                             className="text-[10px] text-gray-400 font-mono cursor-pointer hover:text-blue-500 transition-colors"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(member.id);
-                                                alert("ID nusxalandi: " + member.id);
+                                                const shortId = member.id.substring(0, 8);
+                                                navigator.clipboard.writeText(shortId);
+                                                alert("Qisqa ID nusxalandi: " + shortId);
                                             }}
                                             title="Nusxalash uchun bosing"
                                         >
-                                            ID: {member.id.substring(0, 8)}...
+                                            ID: {member.id.substring(0, 8)}
                                         </span>
                                     </div>
                                 </td>

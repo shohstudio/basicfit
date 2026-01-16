@@ -167,9 +167,20 @@ export async function renewSubscription(memberId: string, formData: FormData) {
     }
 }
 
-export async function scanMember(id: string) {
-    const member = await prisma.member.findUnique({
-        where: { id },
+export async function scanMember(idInput: string) {
+    // Determine if input is a full UUID or a short ID prefix
+    // Actually, searching by prefix works for both cases if the prefix is unique enough (8 chars of UUID is extremely unique)
+
+    // Sanitize input (remove whitespace)
+    const queryId = idInput.trim();
+
+    const member = await prisma.member.findFirst({
+        where: {
+            OR: [
+                { id: queryId }, // Exact match
+                { id: { startsWith: queryId } } // Prefix match
+            ]
+        },
         include: {
             subscriptions: {
                 orderBy: { endDate: 'desc' },

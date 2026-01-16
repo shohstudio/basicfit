@@ -22,7 +22,7 @@ export default function MemberQRCode({ memberId, name, onClose }: { memberId: st
             <div className="bg-white p-4 rounded-lg shadow-sm border">
                 <QRCodeCanvas
                     id={`qr-${memberId}`}
-                    value={memberId} // Simplified to just ID for easier scanning
+                    value={memberId.substring(0, 8)} // Display only first 8 chars for easier scanning
                     size={200}
                     level={"H"}
                     includeMargin={true}
@@ -30,7 +30,7 @@ export default function MemberQRCode({ memberId, name, onClose }: { memberId: st
             </div>
             <div className="text-center">
                 <p className="text-sm font-bold text-zinc-300 bg-zinc-800 px-3 py-1 rounded mb-2 font-mono tracking-wider">
-                    {memberId.split('-')[0]}...{memberId.split('-').pop()}
+                    {memberId.substring(0, 8)}
                 </p>
                 <p className="text-sm text-zinc-500 max-w-[200px]">
                     <strong>{name}</strong>ni aniqlash uchun skaner qiling
