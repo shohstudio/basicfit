@@ -113,14 +113,33 @@ export async function updateMember(id: string, formData: FormData) {
             return { success: false, message: "Ism va Telefon raqami majburiy!" };
         }
 
-        await prisma.member.update({
-            where: { id },
-            data: {
-                fullName,
-                email: email || null,
-                phone,
-                imageUrl: imageUrl || undefined, // Only update if provided
-            },
+        const plan = formData.get("plan") as string;
+
+        await prisma.$transaction(async (tx) => {
+            await tx.member.update({
+                where: { id },
+                data: {
+                    fullName,
+                    email: email || null,
+                    phone,
+                    imageUrl: imageUrl || undefined, // Only update if provided
+                },
+            });
+
+            // Update latest subscription if plan is provided
+            if (plan) {
+                const latestSub = await tx.subscription.findFirst({
+                    where: { memberId: id },
+                    orderBy: { endDate: 'desc' }
+                });
+
+                if (latestSub) {
+                    await tx.subscription.update({
+                        where: { id: latestSub.id },
+                        data: { plan }
+                    });
+                }
+            }
         });
 
         revalidatePath("/");

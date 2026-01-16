@@ -71,15 +71,13 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                                     {member.createdAt ? new Date(member.createdAt).toLocaleDateString() : "-"}
                                 </td>
                                 <td className="p-4 flex justify-end gap-2">
-                                    {member.status !== "ACTIVE" && (
-                                        <button
-                                            onClick={() => onRenew(member)}
-                                            className="p-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors border border-green-100 hover:border-green-200"
-                                            title="Obunani Yangilash"
-                                        >
-                                            <RefreshCcw className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => onRenew(member)}
+                                        className="p-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors border border-green-100 hover:border-green-200"
+                                        title="Obunani Yangilash / Uzaytirish"
+                                    >
+                                        <RefreshCcw className="w-4 h-4" />
+                                    </button>
                                     <button
                                         onClick={() => onEdit(member)}
                                         className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 hover:border-blue-200"

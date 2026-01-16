@@ -14,7 +14,7 @@ type MemberFormProps = {
 export default function MemberForm({ onClose, initialData, mode = 'create' }: MemberFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const webcamRef = useRef<Webcam>(null);
-    const [plan, setPlan] = useState("KUN_ORA");
+    const [plan, setPlan] = useState(initialData?.subscriptions?.[0]?.plan || "KUN_ORA");
 
     // Image state
     const [image, setImage] = useState<string | null>(initialData?.imageUrl || null);
@@ -40,8 +40,21 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
         setPhone("+998" + digits);
     };
     const today = new Date();
-    const nextMonth = new Date(today);
-    nextMonth.setMonth(today.getMonth() + 1);
+
+    // Smart Date Logic for RENEW
+    let defaultStartDate = today;
+    if (mode === 'renew' && initialData?.subscriptions?.length > 0) {
+        const latestSub = initialData.subscriptions[0];
+        const latestEndDate = new Date(latestSub.endDate);
+
+        // If not expired, start from old end date
+        if (latestEndDate > today) {
+            defaultStartDate = latestEndDate;
+        }
+    }
+
+    const nextMonth = new Date(defaultStartDate);
+    nextMonth.setMonth(defaultStartDate.getMonth() + 1);
 
     // Format dates for display (DD/MM/YYYY)
     const formatDate = (d: Date) => d.toLocaleDateString("en-GB");
@@ -80,11 +93,12 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
         let result;
 
         if (mode === 'edit' && initialData) {
+            formData.set("plan", plan);
             result = await updateMember(initialData.id, formData);
         } else if (mode === 'renew' && initialData) {
             formData.set("plan", plan);
             formData.set("price", price.toString());
-            formData.set("startDate", today.toISOString());
+            formData.set("startDate", defaultStartDate.toISOString());
             formData.set("endDate", nextMonth.toISOString());
             result = await renewSubscription(initialData.id, formData);
         } else {
@@ -187,111 +201,113 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
                                     <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                                 </label>
                             </div>
-                        )}
-                    </div>
-                    {!image && <p className="text-[10px] text-red-500 text-center">* Rasm majburiy</p>}
+                        </div>
+                </div>
+                {!image && <p className="text-[10px] text-red-500 text-center">* Rasm majburiy</p>}
+            </div>
+
+            {/* Form Section */}
+            <div className="flex-1">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
 
-                {/* Form Section */}
-                <div className="flex-1">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <form ref={formRef} action={handleSubmit} className="flex flex-col gap-4">
+                <form ref={formRef} action={handleSubmit} className="flex flex-col gap-4">
+                    <input
+                        type="text"
+                        name="fullName"
+                        placeholder="To'liq Ism"
+                        defaultValue={initialData?.fullName}
+                        required
+                        disabled={mode === 'renew'}
+                        className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
+                    />
+                    <div className="grid grid-cols-2 gap-4">
                         <input
-                            type="text"
-                            name="fullName"
-                            placeholder="To'liq Ism"
-                            defaultValue={initialData?.fullName}
+                            type="tel"
+                            name="phone"
+                            placeholder="Telefon Raqam"
+                            value={phone}
+                            onChange={handlePhoneChange}
                             required
+                            disabled={mode === 'renew'}
+                            maxLength={13}
+                            className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
+                        />
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email (Ixtiyoriy)"
+                            defaultValue={initialData?.email}
                             disabled={mode === 'renew'}
                             className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
                         />
-                        <div className="grid grid-cols-2 gap-4">
-                            <input
-                                type="tel"
-                                name="phone"
-                                placeholder="Telefon Raqam"
-                                value={phone}
-                                onChange={handlePhoneChange}
-                                required
-                                disabled={mode === 'renew'}
-                                maxLength={13}
-                                className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
-                            />
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Email (Ixtiyoriy)"
-                                defaultValue={initialData?.email}
-                                disabled={mode === 'renew'}
-                                className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
-                            />
-                        </div>
+                    </div>
 
-                        {mode !== 'edit' && (
-                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Obuna Rejasi</label>
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPlan("KUN_ORA")}
-                                        className={`p-3 rounded-lg border text-left transition-all ${plan === "KUN_ORA"
-                                            ? "border-blue-500 bg-blue-50 text-blue-600 ring-1 ring-blue-500 shadow-sm"
-                                            : "border-gray-200 hover:border-gray-300 text-gray-500 bg-white"
-                                            }`}
-                                    >
-                                        <div className="font-bold text-sm">Kun ora</div>
-                                        <div className="text-xs opacity-70">300 000 so'm</div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setPlan("HAR_KUNLIK")}
-                                        className={`p-3 rounded-lg border text-left transition-all ${plan === "HAR_KUNLIK"
-                                            ? "border-blue-500 bg-blue-50 text-blue-600 ring-1 ring-blue-500 shadow-sm"
-                                            : "border-gray-200 hover:border-gray-300 text-gray-500 bg-white"
-                                            }`}
-                                    >
-                                        <div className="font-bold text-sm">Har kunlik</div>
-                                        <div className="text-xs opacity-70">550 000 so'm</div>
-                                    </button>
-                                </div>
-
-                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                    <div>
-                                        <p className="text-xs text-gray-500 mb-0.5">Jami Summa</p>
-                                        <p className="text-lg font-black text-gray-900">{formattedPrice} so'm</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-gray-500 mb-0.5">Muddati</p>
-                                        <p className="text-xs font-medium text-gray-700">{formatDate(today)} - {formatDate(nextMonth)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 site-footer">
+                    {/* Subscription Plan Section (Visible in all modes) */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Obuna Rejasi</label>
+                        <div className="grid grid-cols-2 gap-3 mb-4">
                             <button
                                 type="button"
-                                onClick={onClose}
-                                className="px-5 py-2.5 text-gray-500 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                                onClick={() => setPlan("KUN_ORA")}
+                                className={`p-3 rounded-lg border text-left transition-all ${plan === "KUN_ORA"
+                                    ? "border-blue-500 bg-blue-50 text-blue-600 ring-1 ring-blue-500 shadow-sm"
+                                    : "border-gray-200 hover:border-gray-300 text-gray-500 bg-white"
+                                    }`}
                             >
-                                Bekor qilish
+                                <div className="font-bold text-sm">Kun ora</div>
+                                <div className="text-xs opacity-70">300 000 so'm</div>
                             </button>
                             <button
-                                type="submit"
-                                className="px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold tracking-wide transition-all shadow-lg shadow-gray-900/10"
+                                type="button"
+                                onClick={() => setPlan("HAR_KUNLIK")}
+                                className={`p-3 rounded-lg border text-left transition-all ${plan === "HAR_KUNLIK"
+                                    ? "border-blue-500 bg-blue-50 text-blue-600 ring-1 ring-blue-500 shadow-sm"
+                                    : "border-gray-200 hover:border-gray-300 text-gray-500 bg-white"
+                                    }`}
                             >
-                                {getButtonText()}
+                                <div className="font-bold text-sm">Har kunlik</div>
+                                <div className="text-xs opacity-70">550 000 so'm</div>
                             </button>
                         </div>
-                    </form>
-                </div>
+
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Jami Summa</p>
+                                <p className="text-lg font-black text-gray-900">{formattedPrice} so'm</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-500 mb-0.5">Muddati</p>
+                                <p className="text-xs font-medium text-gray-700">
+                                    {mode === 'renew' ? formatDate(defaultStartDate) : formatDate(today)} - {formatDate(nextMonth)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 site-footer">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-5 py-2.5 text-gray-500 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                        >
+                            Bekor qilish
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold tracking-wide transition-all shadow-lg shadow-gray-900/10"
+                        >
+                            {getButtonText()}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+        </div >
     );
 }
