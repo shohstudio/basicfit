@@ -131,7 +131,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-2">
                             <TrendingUp className="w-6 h-6" />
                         </div>
-                        <div className="text-3xl font-black text-gray-900">0</div>
+                        <div className="text-3xl font-black text-gray-900">{dailyStats.visitsCount || 0}</div>
                         <h3 className="text-xs font-bold text-gray-500">Bugungi Tashriflar</h3>
                     </div>
 

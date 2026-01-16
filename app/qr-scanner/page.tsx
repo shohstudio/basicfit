@@ -19,15 +19,16 @@ export default function QRScannerPage() {
         return () => window.removeEventListener("click", focusInput);
     }, []);
 
-    const handleScan = async (e: React.FormEvent) => {
+    const handleScan = async (e: React.FormEvent, directValue?: string) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        const valueToScan = directValue || input;
+        if (!valueToScan.trim()) return;
 
         setLoading(true);
         setScanResult(null);
 
         try {
-            const result = await scanMember(input);
+            const result = await scanMember(valueToScan);
             setScanResult(result);
             setInput(""); // Clear for next scan
         } catch (error) {
@@ -49,7 +50,18 @@ export default function QRScannerPage() {
                                 ref={inputRef}
                                 type="text"
                                 value={input}
-                                onChange={(e) => setInput(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setInput(val);
+                                    // Auto submit if length is 8 (Short ID)
+                                    if (val.length === 8) {
+                                        // Use a small timeout to let state update
+                                        setTimeout(() => {
+                                            const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
+                                            handleScan(fakeEvent, val);
+                                        }, 100);
+                                    }
+                                }}
                                 placeholder="QR Kodni skanerlang..."
                                 className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl px-4 py-4 pl-12 focus:ring-2 focus:ring-blue-500 outline-none text-lg shadow-xl shadow-blue-500/5 placeholder:text-gray-400"
                                 autoFocus
@@ -106,6 +118,24 @@ export default function QRScannerPage() {
                                                 <p className="text-gray-500 text-sm">Holati</p>
                                                 <p className="text-gray-900 font-mono font-bold">{scanResult.member.status}</p>
                                             </div>
+                                            {(scanResult.member.subscriptions && scanResult.member.subscriptions.length > 0) && (
+                                                <div className="col-span-2 mt-2 pt-2 border-t border-gray-200">
+                                                    <p className="text-gray-500 text-sm">Ta'rif</p>
+                                                    <p className="text-lg font-black text-gray-900 uppercase">
+                                                        {scanResult.member.subscriptions[0].plan === "KUN_ORA" ? "Kun ora" :
+                                                            scanResult.member.subscriptions[0].plan === "HAR_KUNLIK" ? "Har kunlik" :
+                                                                scanResult.member.subscriptions[0].plan}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {scanResult.checkIn && (
+                                                <div className="col-span-2 mt-2 pt-2 border-t border-gray-200">
+                                                    <p className="text-gray-500 text-sm">Kelgan Vaqti</p>
+                                                    <p className="text-2xl font-black text-blue-600 font-mono">
+                                                        {new Date(scanResult.checkIn).toLocaleTimeString("ru-RU", { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

@@ -197,13 +197,55 @@ export async function scanMember(idInput: string) {
     let isAllowed = member.status === "ACTIVE";
     let message = "Kirish Ruxsat Etildi";
 
-    // Double check subscription expiration just in case status wasn't auto-updated
+    // Check KUN_ORA (Every other day) Restriction
     if (member.subscriptions.length > 0) {
         const sub = member.subscriptions[0];
+
+        // Expiration Check
         if (new Date(sub.endDate) < new Date()) {
             isAllowed = false;
             message = "Obuna muddati tugagan!";
+        } else if (sub.plan === "KUN_ORA") {
+            // Check formatted yesterday
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
+            const endOfYesterday = new Date(yesterday.setHours(23, 59, 59, 999));
+
+            const visitedYesterday = await prisma.attendance.findFirst({
+                where: {
+                    memberId: member.id,
+                    checkIn: {
+                        gte: startOfYesterday,
+                        lte: endOfYesterday
+                    }
+                }
+            });
+
+            if (visitedYesterday) {
+                isAllowed = false;
+                message = "Siz kun ora keladigan a'zosiz (Kecha kelgansiz)";
+            }
         }
+    }
+
+    // Check if already checked in today
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const existingAttendance = await prisma.attendance.findFirst({
+        where: {
+            memberId: member.id,
+            checkIn: {
+                gte: startOfDay,
+                lte: endOfDay
+            }
+        }
+    });
+
+    if (existingAttendance) {
+        return { success: false, message: "QR kod bir kunda birmarta ishlaydi", member };
     }
 
     if (!isAllowed) {
@@ -211,14 +253,14 @@ export async function scanMember(idInput: string) {
     }
 
     // CREATE ATTENDANCE RECORD
-    await prisma.attendance.create({
+    const attendance = await prisma.attendance.create({
         data: {
             memberId: member.id,
             checkIn: new Date()
         }
     });
 
-    return { success: true, message: "Xush kelibsiz!", member };
+    return { success: true, message: "Xush kelibsiz!", member, checkIn: attendance.checkIn };
 }
 
 // --- PLAN ACTIONS ---
@@ -305,10 +347,21 @@ export async function getDailyStats() {
         }
     });
 
+    // Count daily visits
+    const visitsCount = await prisma.attendance.count({
+        where: {
+            checkIn: {
+                gte: today,
+                lt: tomorrow
+            }
+        }
+    });
+
     const totalRevenue = subscriptions.reduce((acc, sub) => acc + sub.price, 0);
 
     return {
         revenue: totalRevenue,
+        visitsCount: visitsCount,
         transactions: subscriptions.map(sub => ({
             id: sub.id,
             member: sub.member.fullName,
