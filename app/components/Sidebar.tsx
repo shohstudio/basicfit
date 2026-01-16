@@ -93,7 +93,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             AD
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
+                            <p className="text-sm font-bold text-gray-900 truncate">Administrator</p>
                             <p className="text-xs text-gray-500 truncate">Administrator</p>
                         </div>
                         <button
@@ -106,5 +106,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </div>
                 </div>
             </aside>
-            );
+        </>
+    );
 }
