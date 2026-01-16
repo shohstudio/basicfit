@@ -21,7 +21,24 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
     const [isCameraMode, setIsCameraMode] = useState(true);
     const [cameraError, setCameraError] = useState(false);
 
-    // Auto-calculate dates for NEW/RENEWING members
+
+
+    // Phone state
+    const [phone, setPhone] = useState(initialData?.phone || "+998");
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value;
+        // Don't allow deleting +998
+        if (!val.startsWith("+998")) {
+            val = "+998" + val.replace(/^\+998/, "").replace(/\D/g, "");
+        }
+
+        // Allow only digits after prefix and limit to 9 digits (13 chars total)
+        const digits = val.slice(4).replace(/\D/g, "");
+        if (digits.length > 9) return;
+
+        setPhone("+998" + digits);
+    };
     const today = new Date();
     const nextMonth = new Date(today);
     nextMonth.setMonth(today.getMonth() + 1);
@@ -199,9 +216,11 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
                                 type="tel"
                                 name="phone"
                                 placeholder="Telefon Raqam"
-                                defaultValue={initialData?.phone}
+                                value={phone}
+                                onChange={handlePhoneChange}
                                 required
                                 disabled={mode === 'renew'}
+                                maxLength={13}
                                 className="bg-gray-50 text-gray-900 border border-gray-200 p-3 rounded-lg w-full focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 placeholder:text-gray-400 disabled:opacity-50 font-medium transition-all"
                             />
                             <input
