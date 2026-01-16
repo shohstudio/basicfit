@@ -129,6 +129,21 @@ export async function updateMember(id: string, formData: FormData) {
 
         const plan = formData.get("plan") as string;
 
+        // Check duplicate phone (excluding current member)
+        const duplicatePhone = await prisma.member.findFirst({
+            where: {
+                phone,
+                id: { not: id }
+            }
+        });
+
+        if (duplicatePhone) {
+            return {
+                success: false,
+                message: `Bu raqam bilan ${duplicatePhone.fullName} ro'yxatdan o'tgan.`
+            };
+        }
+
         await prisma.$transaction(async (tx) => {
             await tx.member.update({
                 where: { id },
