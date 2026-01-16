@@ -5,7 +5,12 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, CreditCard, CalendarCheck, Scan, LogOut, FileText, CheckSquare, Dumbbell, ClipboardList } from "lucide-react";
 import { logout } from "../actions/auth";
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     const menuItems = [
@@ -37,59 +42,69 @@ export default function Sidebar() {
     ];
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-            <div className="p-6">
-                <div className="flex items-center gap-2 mb-8">
-                    {/* Logo - Matching NitroFIT style but with Basic Fit text */}
-                    <h1 className="text-2xl font-black tracking-tight text-blue-600 flex items-center gap-1">
-                        <span className="text-3xl">BASIC</span> <span className="text-orange-500">FIT</span>
-                    </h1>
-                </div>
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+                    onClick={onClose}
+                />
+            )}
 
-                <nav className="space-y-1">
-                    {realMenuItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative ${isActive
-                                    ? "bg-blue-50 text-blue-600 font-bold"
-                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                                    }`}
-                            >
-                                <item.icon
-                                    className={`w-5 h-5 transition-colors ${isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+            <aside className={`w-64 bg-white border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+                }`}>
+                <div className="p-6">
+                    <div className="flex items-center gap-2 mb-8">
+                        {/* Logo - Matching NitroFIT style but with Basic Fit text */}
+                        <h1 className="text-2xl font-black tracking-tight text-blue-600 flex items-center gap-1">
+                            <span className="text-3xl">BASIC</span> <span className="text-orange-500">FIT</span>
+                        </h1>
+                    </div>
+
+                    <nav className="space-y-1">
+                        {realMenuItems.map((item) => {
+                            const isActive = pathname === item.href;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative ${isActive
+                                        ? "bg-blue-50 text-blue-600 font-bold"
+                                        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                         }`}
-                                />
-                                <span className="text-sm font-medium">{item.name}</span>
-                                {isActive && (
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full"></div>
-                                )}
-                            </Link>
-                        );
-                    })}
-                </nav>
-            </div>
-
-            <div className="mt-auto p-6 border-t border-gray-100">
-                <div className="flex items-center gap-3 w-full">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border-2 border-white shadow-sm">
-                        AD
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
-                        <p className="text-xs text-gray-500 truncate">Administrator</p>
-                    </div>
-                    <button
-                        onClick={() => logout()}
-                        className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                        title="Chiqish"
-                    >
-                        <LogOut className="w-5 h-5" />
-                    </button>
+                                >
+                                    <item.icon
+                                        className={`w-5 h-5 transition-colors ${isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                                            }`}
+                                    />
+                                    <span className="text-sm font-medium">{item.name}</span>
+                                    {isActive && (
+                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-r-full"></div>
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </nav>
                 </div>
-            </div>
-        </aside>
-    );
+
+                <div className="mt-auto p-6 border-t border-gray-100">
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border-2 border-white shadow-sm">
+                            AD
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">Admin User</p>
+                            <p className="text-xs text-gray-500 truncate">Administrator</p>
+                        </div>
+                        <button
+                            onClick={() => logout()}
+                            className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                            title="Chiqish"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            </aside>
+            );
 }
