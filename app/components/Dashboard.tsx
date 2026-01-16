@@ -104,7 +104,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
             <div className="space-y-8">
                 {/* Header Greeting */}
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Good evening Admin</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Xayrli kech Admin</h2>
                 </div>
 
                 {/* Main Action Cards & Stats (Row 1) */}
@@ -114,7 +114,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                             <span className="text-2xl font-bold">+</span>
                         </div>
-                        <h3 className="font-bold text-blue-500">Add Member</h3>
+                        <h3 className="font-bold text-blue-500">A'zo qo'shish</h3>
                     </div>
 
                     {/* New Members */}
@@ -123,7 +123,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             <Users className="w-6 h-6" />
                         </div>
                         <div className="text-3xl font-black text-gray-900">{newMembersCount}</div>
-                        <h3 className="text-xs font-bold text-gray-500">New Members</h3>
+                        <h3 className="text-xs font-bold text-gray-500">Yangi A'zolar</h3>
                     </Link>
 
                     {/* Visits Today */}
@@ -132,7 +132,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             <TrendingUp className="w-6 h-6" />
                         </div>
                         <div className="text-3xl font-black text-gray-900">0</div>
-                        <h3 className="text-xs font-bold text-gray-500">Visits Today</h3>
+                        <h3 className="text-xs font-bold text-gray-500">Bugungi Tashriflar</h3>
                     </div>
 
                     {/* Member Visits */}
@@ -141,7 +141,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             <TrendingUp className="w-6 h-6 rotate-180" />
                         </div>
                         <div className="text-3xl font-black text-gray-900">4</div>
-                        <h3 className="text-xs font-bold text-gray-500">Member Visits</h3>
+                        <h3 className="text-xs font-bold text-gray-500">A'zolar Tashrifi</h3>
                     </div>
                 </div>
 

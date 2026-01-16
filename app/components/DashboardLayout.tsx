@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                         <div className="relative cursor-pointer text-green-600 hover:text-green-700 font-bold flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
                             <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs">AU</div>
-                            <span className="text-sm">Admin User</span>
+                            <span className="text-sm">Administrator</span>
                         </div>
                     </div>
                 </header>

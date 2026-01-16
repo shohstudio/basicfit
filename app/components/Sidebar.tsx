@@ -30,10 +30,10 @@ export default function Sidebar() {
     // So I will keep the OLD menu items but Style them like the NEW design.
 
     const realMenuItems = [
-        { name: "Dashboard", icon: LayoutDashboard, href: "/" },
-        { name: "Members", icon: Users, href: "/members" },
-        { name: "Qr Scanner", icon: Scan, href: "/qr-scanner" },
-        { name: "Attendances", icon: CalendarCheck, href: "/attendance" },
+        { name: "Bosh sahifa", icon: LayoutDashboard, href: "/" },
+        { name: "A'zolar", icon: Users, href: "/members" },
+        { name: "QR Skaner", icon: Scan, href: "/qr-scanner" },
+        { name: "Davomat", icon: CalendarCheck, href: "/attendance" },
     ];
 
     return (
