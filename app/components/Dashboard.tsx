@@ -15,7 +15,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
     const [modalMode, setModalMode] = useState<'create' | 'edit' | 'renew'>('create');
 
     // Real-time Stats State
-    const [realtimeStats, setRealtimeStats] = useState(dailyStats || { revenue: 0, visitsCount: 0, transactions: [] });
+    const [realtimeStats, setRealtimeStats] = useState(dailyStats || { revenue: 0, visitsCount: 0, monthlyVisits: 0, transactions: [], recentVisits: [] });
 
     // Polling Effect for Real-time Updates (every 5 seconds)
     useEffect(() => {
@@ -154,13 +154,14 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                     </div>
 
                     {/* Member Visits */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40">
+                    {/* Member Visits (Monthly) */}
+                    <Link href="/attendance" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40 hover:shadow-md transition-shadow">
                         <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-2">
                             <TrendingUp className="w-6 h-6 rotate-180" />
                         </div>
-                        <div className="text-3xl font-black text-gray-900">4</div>
-                        <h3 className="text-xs font-bold text-gray-500">A'zolar Tashrifi</h3>
-                    </div>
+                        <div className="text-3xl font-black text-gray-900">{realtimeStats.monthlyVisits || 0}</div>
+                        <h3 className="text-xs font-bold text-gray-500">Oylik Tashriflar</h3>
+                    </Link>
                 </div>
 
 
@@ -205,24 +206,53 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         </div>
                     </div>
 
-                    {/* REPLACED EXPECTED VISITS WITH MEMBER LIST FOR DASHBOARD */}
+                    {/* REPLACED "New Members" WITH "Recent Visits" FOR DASHBOARD */}
                     <div className="lg:col-span-2 bg-white border border-gray-200 p-6 rounded-2xl shadow-sm overflow-hidden">
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">So'nggi Ro'yxatdan O'tganlar</h3>
-                                <p className="text-xs text-gray-500 mt-1">Oxirgi qo'shilgan a'zolar ro'yxati</p>
+                                <h3 className="text-lg font-bold text-gray-900">So'nggi Tashriflar</h3>
+                                <p className="text-xs text-gray-500 mt-1">Sport zaliga oxirgi kirgan a'zolar</p>
                             </div>
-                            <button
-                                onClick={openAddModal}
+                            <Link
+                                href="/attendance"
                                 className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-colors"
                             >
-                                + Yangi A'zo
-                            </button>
+                                Barchasini ko'rish
+                            </Link>
                         </div>
 
-                        {/* Use MemberList component but maybe limit it or just show all */}
-                        <div className="max-h-[400px] overflow-y-auto">
-                            <MemberList members={members} onEdit={openEditModal} onRenew={openRenewModal} />
+                        <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                            {realtimeStats.recentVisits && realtimeStats.recentVisits.length > 0 ? (
+                                realtimeStats.recentVisits.map((visit: any, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">
+                                                {visit.image ? (
+                                                    <img src={visit.image} alt={visit.member} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-gray-500">{visit.member.charAt(0)}</span>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 text-sm">{visit.member}</p>
+                                                <p className="text-[10px] text-gray-500">{visit.plan}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-gray-700 text-xs">
+                                                {new Date(visit.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                            <p className="text-[10px] text-gray-400">
+                                                {new Date(visit.checkIn).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-8 text-gray-500 text-sm">
+                                    Hozircha tashriflar yo'q
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

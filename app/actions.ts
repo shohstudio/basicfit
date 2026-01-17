@@ -407,9 +407,48 @@ export async function getDailyStats() {
 
     const totalRevenue = subscriptions.reduce((acc, sub) => acc + sub.price, 0);
 
+    // Recent visits (latest 10)
+    const recentVisits = await prisma.attendance.findMany({
+        take: 10,
+        orderBy: { checkIn: 'desc' },
+        include: {
+            member: {
+                select: {
+                    fullName: true,
+                    imageUrl: true,
+                    subscriptions: {
+                        orderBy: { endDate: 'desc' },
+                        take: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly visits count
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const monthlyVisits = await prisma.attendance.count({
+        where: {
+            checkIn: {
+                gte: startOfMonth,
+                lte: endOfMonth
+            }
+        }
+    });
+
     return {
         revenue: totalRevenue,
         visitsCount: visitsCount,
+        monthlyVisits: monthlyVisits,
+        recentVisits: recentVisits.map(visit => ({
+            id: visit.id,
+            member: visit.member.fullName,
+            image: visit.member.imageUrl,
+            checkIn: visit.checkIn,
+            plan: visit.member.subscriptions[0]?.plan || 'Obunasiz'
+        })),
         transactions: subscriptions.map(sub => ({
             id: sub.id,
             member: sub.member.fullName,
