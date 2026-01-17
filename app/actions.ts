@@ -2,6 +2,7 @@
 
 import { prisma } from "./lib/prisma";
 import { revalidatePath } from "next/cache";
+import { sendWebhook } from "./lib/webhook";
 
 export async function getMembers(query: string = "") {
     const members = await prisma.member.findMany({
@@ -93,6 +94,14 @@ export async function createMember(formData: FormData) {
                     }
                 });
             }
+        });
+
+        // Webhook: New Member
+        await sendWebhook("MEMBER_CREATED", {
+            fullName,
+            phone,
+            plan: plan || "Obunasiz",
+            price: price || 0
         });
 
         revalidatePath("/");
@@ -206,6 +215,19 @@ export async function renewSubscription(memberId: string, formData: FormData) {
             });
         });
 
+        // Fetch member name for webhook
+        const member = await prisma.member.findUnique({ where: { id: memberId } });
+
+        // Webhook: Subscription Renewed
+        await sendWebhook("SUBSCRIPTION_RENEWED", {
+            memberId,
+            memberName: member?.fullName || "Unknown",
+            plan,
+            price,
+            startDate,
+            endDate
+        });
+
         revalidatePath("/");
         revalidatePath("/members");
         return { success: true, message: "Obuna yangilandi!" };
@@ -306,6 +328,14 @@ export async function scanMember(idInput: string) {
             memberId: member.id,
             checkIn: new Date()
         }
+    });
+
+    // Webhook: Member Check-in
+    await sendWebhook("MEMBER_CHECKIN", {
+        memberId: member.id,
+        memberName: member.fullName,
+        checkInTime: attendance.checkIn,
+        plan: member.subscriptions[0]?.plan || "Obunasiz"
     });
 
     return { success: true, message: "Xush kelibsiz!", member, checkIn: attendance.checkIn };
