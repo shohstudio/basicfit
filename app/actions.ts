@@ -331,10 +331,17 @@ export async function scanMember(idInput: string) {
     });
 
     // Webhook: Member Check-in
+    const formattedCheckIn = new Date(attendance.checkIn).toLocaleString("ru-RU", {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+        timeZone: "Asia/Tashkent"
+    });
+
     await sendWebhook("MEMBER_CHECKIN", {
         memberId: member.id,
         memberName: member.fullName,
         checkInTime: attendance.checkIn,
+        formattedTime: formattedCheckIn, // NEW: Readable format
         plan: member.subscriptions[0]?.plan || "Obunasiz"
     });
 
