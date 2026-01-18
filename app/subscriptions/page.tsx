@@ -2,6 +2,8 @@
 import { getAllSubscriptions } from "../actions";
 import DashboardLayout from "../components/DashboardLayout";
 
+export const dynamic = "force-dynamic";
+
 export default async function SubscriptionsPage() {
     const subscriptions = await getAllSubscriptions();
 
