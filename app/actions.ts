@@ -568,3 +568,39 @@ export async function sendMonthlyReport() {
         return { success: false, message: "Hisobot yuborishda xatolik!" };
     }
 }
+
+// --- SUBSCRIPTION PAGE ACTIONS ---
+
+export async function getAllSubscriptions() {
+    const subscriptions = await prisma.subscription.findMany({
+        include: {
+            member: {
+                select: {
+                    fullName: true,
+                    imageUrl: true,
+                    status: true
+                }
+            }
+        },
+        orderBy: {
+            startDate: 'desc'
+        }
+    });
+
+    return subscriptions.map(sub => {
+        const now = new Date();
+        const endDate = new Date(sub.endDate);
+        const isActive = endDate > now;
+
+        return {
+            id: sub.id,
+            memberName: sub.member.fullName,
+            memberImage: sub.member.imageUrl,
+            plan: sub.plan,
+            price: sub.price,
+            status: isActive ? "ACTIVE" : "EXPIRED",
+            startDate: sub.startDate,
+            endDate: sub.endDate
+        };
+    });
+}

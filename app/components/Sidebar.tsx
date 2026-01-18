@@ -37,6 +37,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const realMenuItems = [
         { name: "Bosh sahifa", icon: LayoutDashboard, href: "/" },
         { name: "A'zolar", icon: Users, href: "/members" },
+        { name: "Obunalar", icon: CreditCard, href: "/subscriptions" },
         { name: "QR Skaner", icon: Scan, href: "/qr-scanner" },
         { name: "Davomat", icon: CalendarCheck, href: "/attendance" },
     ];
