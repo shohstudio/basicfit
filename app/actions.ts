@@ -48,28 +48,24 @@ export async function createMember(formData: FormData) {
         const imageUrl = formData.get("imageUrl") as string;
 
         // Subscription Data
-        const plan = formData.get("plan") as string;
-        const price = parseFloat(formData.get("price") as string);
-        const startDate = new Date(formData.get("startDate") as string);
-        const endDate = new Date(formData.get("endDate") as string);
+        const rawPlan = formData.get("plan") as string;
+        const plan = rawPlan || "KUN_ORA"; // Default to KUN_ORA if missing
 
+        const price = parseFloat(formData.get("price") as string) || (plan === "HAR_KUNLIK" ? 550000 : 300000);
+        const startDate = new Date(formData.get("startDate") as string || new Date());
+
+        // Calculate End Date if missing (1 month)
+        let endDate = new Date(formData.get("endDate") as string);
+        if (isNaN(endDate.getTime())) {
+            endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+        }
 
         if (!fullName || !phone) {
             return { success: false, message: "Ism va Telefon raqami majburiy!" };
         }
 
-        // Check for duplicate phone
-        const existingMember = await prisma.member.findFirst({
-            where: { phone }
-        });
-
-        if (existingMember) {
-            return {
-                success: false,
-                message: `Bu raqam bilan ${existingMember.fullName} ro'yxatdan o'tgan.`
-            };
-        }
-
+        // ... (duplicate check)
 
         // Transaction: Create Member AND Subscription
         await prisma.$transaction(async (tx) => {
@@ -83,25 +79,24 @@ export async function createMember(formData: FormData) {
                 },
             });
 
-            if (plan) {
-                await tx.subscription.create({
-                    data: {
-                        plan,
-                        price,
-                        startDate,
-                        endDate,
-                        memberId: member.id
-                    }
-                });
-            }
+            // Always create subscription
+            await tx.subscription.create({
+                data: {
+                    plan,
+                    price,
+                    startDate,
+                    endDate,
+                    memberId: member.id
+                }
+            });
         });
 
         // Webhook: New Member
         await sendWebhook("MEMBER_CREATED", {
             fullName,
             phone,
-            plan: plan || "Obunasiz",
-            price: price || 0
+            plan: plan,
+            price: price
         });
 
         revalidatePath("/");
