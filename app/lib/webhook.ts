@@ -10,8 +10,8 @@ export async function sendWebhook(eventType: string, payload: any) {
     }
 
     try {
-        // Fire and forget - don't await response to speed up UI
-        fetch(WEBHOOK_URL, {
+        // We MUST await fetch in Vercel Serverless, otherwise it may be cancelled
+        await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -19,7 +19,7 @@ export async function sendWebhook(eventType: string, payload: any) {
                 timestamp: new Date().toISOString(),
                 ...payload
             })
-        }).catch(err => console.error("Webhook Fetch Error:", err));
+        });
 
     } catch (error) {
         console.error("Webhook Execution Error:", error);
