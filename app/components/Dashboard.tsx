@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
-import { getDailyStats } from "../actions";
+import { getDailyStats, sendMonthlyReport } from "../actions";
 
 export default function Dashboard({ members, search, action, dailyStats }: { members: any[], search: string, action?: string, dailyStats?: any }) {
     // Modal State Logic (Duplicated from MembersView for full functionality)
@@ -120,9 +120,24 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
     return (
         <DashboardLayout>
             <div className="space-y-8">
-                {/* Header Greeting */}
-                <div>
+                <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">Xayrli kech Admin</h2>
+                    <button
+                        onClick={async () => {
+                            if (confirm("Oylik hisobotni Telegramga yuborasizmi?")) {
+                                try {
+                                    const res = await sendMonthlyReport();
+                                    alert(res.message);
+                                } catch (e) {
+                                    alert("Xatolik bo'ldi");
+                                }
+                            }
+                        }}
+                        className="bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                    >
+                        <CalendarCheck className="w-4 h-4" />
+                        Hisobot Yuborish
+                    </button>
                 </div>
 
                 {/* Main Action Cards & Stats (Row 1) */}
