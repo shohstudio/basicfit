@@ -48,10 +48,14 @@ export async function createMember(formData: FormData) {
         const imageUrl = formData.get("imageUrl") as string;
 
         // Subscription Data
-        const rawPlan = formData.get("plan") as string;
-        const plan = rawPlan || "KUN_ORA"; // Default to KUN_ORA if missing
+        const plan = formData.get("plan") as string;
 
-        const price = parseFloat(formData.get("price") as string) || (plan === "HAR_KUNLIK" ? 550000 : 300000);
+        // Validate Plan
+        if (!plan) {
+            return { success: false, message: "Tarif rejasini tanlash majburiy!" };
+        }
+
+        const price = parseFloat(formData.get("price") as string);
         const startDate = new Date(formData.get("startDate") as string || new Date());
 
         // Calculate End Date if missing (1 month)
