@@ -10,7 +10,7 @@ export default async function SubscriptionsPage() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Obunalar Tarixi</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Obunalar</h1>
                         <p className="text-gray-500 text-sm mt-1">Barcha to'lovlar va obunalar ro'yxati</p>
                     </div>
                 </div>
@@ -60,8 +60,8 @@ export default async function SubscriptionsPage() {
                                         {/* Status */}
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${sub.status === 'ACTIVE'
-                                                    ? 'bg-green-50 text-green-700 border-green-100'
-                                                    : 'bg-red-50 text-red-700 border-red-100'
+                                                ? 'bg-green-50 text-green-700 border-green-100'
+                                                : 'bg-red-50 text-red-700 border-red-100'
                                                 }`}>
                                                 {sub.status === 'ACTIVE' ? 'Faol' : 'Tugagan'}
                                             </span>
