@@ -105,6 +105,7 @@ export async function createMember(formData: FormData) {
 
         revalidatePath("/");
         revalidatePath("/members");
+        revalidatePath("/subscriptions");
         return { success: true, message: "Muvaffaqiyatli qo'shildi!" };
     } catch (error: any) {
         console.error("CREATE MEMBER ERROR:", error);
@@ -171,9 +172,13 @@ export async function updateMember(id: string, formData: FormData) {
                 });
 
                 if (latestSub) {
+                    const newPrice = plan === "HAR_KUNLIK" ? 550000 : 300000;
                     await tx.subscription.update({
                         where: { id: latestSub.id },
-                        data: { plan }
+                        data: {
+                            plan,
+                            price: newPrice
+                        }
                     });
                 }
             }
@@ -181,6 +186,7 @@ export async function updateMember(id: string, formData: FormData) {
 
         revalidatePath("/");
         revalidatePath("/members");
+        revalidatePath("/subscriptions");
         return { success: true, message: "Tahrirlandi!" };
     } catch (error: any) {
         console.error("UPDATE MEMBER ERROR:", error);
@@ -229,6 +235,7 @@ export async function renewSubscription(memberId: string, formData: FormData) {
 
         revalidatePath("/");
         revalidatePath("/members");
+        revalidatePath("/subscriptions");
         return { success: true, message: "Obuna yangilandi!" };
     } catch (error: any) {
         console.error("RENEW ERROR:", error);
