@@ -26,10 +26,19 @@ export const getMembers = unstable_cache(
         const [members, totalCount] = await Promise.all([
             prisma.member.findMany({
                 where: whereCondition,
-                include: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    email: true,
+                    phone: true,
+                    status: true,
+                    createdAt: true,
                     subscriptions: {
                         orderBy: { endDate: 'desc' },
-                        take: 1
+                        take: 1,
+                        select: {
+                            endDate: true
+                        }
                     }
                 },
                 orderBy: { createdAt: "desc" },
@@ -513,7 +522,6 @@ export async function renewSubscription(memberId: string, formData: FormData) {
 export async function scanMember(idInput: string) {
     // Determine if input is a full UUID or a short ID prefix
     // Actually, searching by prefix works for both cases if the prefix is unique enough (8 chars of UUID is extremely unique)
-
     // Sanitize input (remove whitespace)
     const queryId = idInput.trim();
 
