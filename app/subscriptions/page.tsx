@@ -1,11 +1,17 @@
-
 import { getAllSubscriptions } from "../actions";
 import DashboardLayout from "../components/DashboardLayout";
+import Pagination from "../components/Pagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function SubscriptionsPage() {
-    const subscriptions = await getAllSubscriptions();
+export default async function SubscriptionsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ page?: string }>;
+}) {
+    const params = await searchParams;
+    const page = parseInt(params.page || "1", 10) || 1;
+    const { subscriptions, totalPages, currentPage, totalSubscriptions } = await getAllSubscriptions(page);
 
     return (
         <DashboardLayout>
@@ -13,7 +19,7 @@ export default async function SubscriptionsPage() {
                 <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Obunalar</h1>
-                        <p className="text-gray-500 text-sm mt-1">Barcha to'lovlar va obunalar ro'yxati</p>
+                        <p className="text-gray-500 text-sm mt-1">Jami obunalar: {totalSubscriptions}</p>
                     </div>
                 </div>
 
@@ -89,6 +95,10 @@ export default async function SubscriptionsPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="p-4 border-t border-gray-200">
+                    <Pagination totalPages={totalPages} currentPage={currentPage} />
                 </div>
             </div>
         </DashboardLayout>

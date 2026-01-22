@@ -595,23 +595,32 @@ export async function sendMonthlyReport() {
 
 // --- SUBSCRIPTION PAGE ACTIONS ---
 
-export async function getAllSubscriptions() {
-    const subscriptions = await prisma.subscription.findMany({
-        include: {
-            member: {
-                select: {
-                    fullName: true,
-                    imageUrl: true,
-                    status: true
-                }
-            }
-        },
-        orderBy: {
-            startDate: 'desc'
-        }
-    });
+export async function getAllSubscriptions(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
 
-    return subscriptions.map(sub => {
+    const [subscriptions, totalCount] = await Promise.all([
+        prisma.subscription.findMany({
+            include: {
+                member: {
+                    select: {
+                        fullName: true,
+                        imageUrl: true,
+                        status: true
+                    }
+                }
+            },
+            orderBy: {
+                startDate: 'desc'
+            },
+            skip,
+            take: limit
+        }),
+        prisma.subscription.count()
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const processedSubscriptions = subscriptions.map(sub => {
         const now = new Date();
         const endDate = new Date(sub.endDate);
         const isActive = endDate > now;
@@ -627,4 +636,11 @@ export async function getAllSubscriptions() {
             endDate: sub.endDate
         };
     });
+
+    return {
+        subscriptions: processedSubscriptions,
+        totalPages,
+        currentPage: page,
+        totalSubscriptions: totalCount
+    };
 }
