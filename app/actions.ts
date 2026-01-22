@@ -1,8 +1,14 @@
 "use server";
 
 import { prisma } from "./lib/prisma";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag as _revalidateTag, unstable_cache } from "next/cache";
 import { sendWebhook } from "./lib/webhook";
+
+// Workaround for Next.js 16 type mismatch (expecting 2 args)
+const revalidateTag = (tag: string) => {
+    // @ts-ignore
+    _revalidateTag(tag);
+};
 
 // --- CACHED DATA FETCHERS ---
 
