@@ -13,9 +13,9 @@ export default async function Home({
   const action = params.action || "";
 
   try {
-    // Dashboard needs all members for stats calculation (new members, plan distribution)
-    // Fetching with a large limit to mimic "all" until Dashboard is refactored to use server-side aggregation
-    const { members } = await getMembers(query, 1, 10000);
+    // Optimization: Now using server-side aggregated stats, so we don't need all members.
+    // Fetch only the first page for the table view.
+    const { members } = await getMembers(query, 1, 10);
     const dailyStats = await getDailyStats();
     return <Dashboard members={members} search={query} action={action} dailyStats={dailyStats} />;
   } catch (error: any) {

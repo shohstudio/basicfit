@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+
+# SSH and check
+# Removed npm install to avoid peer dep errors
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "cd /var/www/basicfit && npx tsx prisma/check_count.ts"
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}

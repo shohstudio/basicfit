@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+set ip "138.249.7.221"
+set user "root"
+set password "4yKpBH%oZ\$T@UMfb"
+
+# SSH, clear cache, and restart
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "rm -rf /var/www/basicfit/.next/cache && pm2 restart basicfit"
+expect {
+  "password:" { send "$password\r"; exp_continue }
+  eof
+}

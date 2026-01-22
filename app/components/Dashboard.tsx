@@ -52,18 +52,24 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
         setIsModalOpen(true);
     };
 
-    // Calculate real stats from members data
-    const totalMembers = members.length;
+    // Use server provided stats
+    const totalMembers = dailyStats?.totalMembers || members.length || 0;
+    const newMembersCount = dailyStats?.newMembersCount || 0;
+    const dailyRevenue = dailyStats?.revenue || 0;
 
-    // Calculate new members (joined this month)
-    const currentMonth = new Date().getMonth();
-    const newMembersCount = members.filter(m => {
-        const joinedDate = new Date(m.createdAt);
-        return joinedDate.getMonth() === currentMonth;
-    }).length;
+    // Plan distribution from server stats
+    let planData = dailyStats?.planStats || [];
 
-    // Calculate Today's Revenue (Use server provided stats or fallback)
-    const dailyRevenue = realtimeStats?.revenue || 0;
+    // Fallback if no data
+    if (planData.length === 0) {
+        planData.push({ name: "Ma'lumot yo'q", value: 1, valueColor: "#52525b" });
+    } else {
+        // Assign colors
+        planData = planData.map((item: any, index: number) => ({
+            ...item,
+            color: index === 0 ? "#f97316" : index === 1 ? "#3b82f6" : "#52525b"
+        }));
+    }
 
     const stats = [
         {
@@ -98,24 +104,6 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
             onClick: () => setIsIncomeModalOpen(true) // Open details modal on click
         },
     ];
-
-    // Plan distribution (Replaces Gender data since we don't have gender DB field)
-    const planCounts: Record<string, number> = {};
-    members.forEach(m => {
-        const planName = m.subscriptions && m.subscriptions[0] ? m.subscriptions[0].plan : 'Obunasiz';
-        planCounts[planName] = (planCounts[planName] || 0) + 1;
-    });
-
-    const planData = Object.keys(planCounts).map((key, index) => ({
-        name: key,
-        value: planCounts[key],
-        color: index === 0 ? "#f97316" : index === 1 ? "#3b82f6" : "#52525b" // Orange, Blue, Zinc
-    }));
-
-    // Fallback if no data
-    if (planData.length === 0) {
-        planData.push({ name: "Ma'lumot yo'q", value: 1, color: "#52525b" });
-    }
 
     return (
         <DashboardLayout>

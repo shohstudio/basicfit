@@ -439,70 +439,75 @@ export async function getDailyStats() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const subscriptions = await prisma.subscription.findMany({
-        where: {
-            startDate: {
-                gte: today,
-                lt: tomorrow
-            }
-        },
-        include: {
-            member: {
-                select: {
-                    fullName: true,
-                    imageUrl: true
-                }
-            }
-        }
-    });
-
-    // Count daily visits
-    const visitsCount = await prisma.attendance.count({
-        where: {
-            checkIn: {
-                gte: today,
-                lt: tomorrow
-            }
-        }
-    });
-
-    const totalRevenue = subscriptions.reduce((acc, sub) => acc + sub.price, 0);
-
-    // Recent visits (latest 10)
-    const recentVisits = await prisma.attendance.findMany({
-        take: 10,
-        orderBy: { checkIn: 'desc' },
-        include: {
-            member: {
-                select: {
-                    fullName: true,
-                    imageUrl: true,
-                    subscriptions: {
-                        orderBy: { endDate: 'desc' },
-                        take: 1
-                    }
-                }
-            }
-        }
-    });
-
-    // Monthly visits count
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    const monthlyVisits = await prisma.attendance.count({
-        where: {
-            checkIn: {
-                gte: startOfMonth,
-                lte: endOfMonth
+    const [
+        todaysSubscriptions,
+        visitsCount,
+        recentVisits,
+        monthlyVisits,
+        totalMembers,
+        newMembersCount,
+        activeSubscriptions
+    ] = await Promise.all([
+        // 1. Today's Subscriptions (for Revenue)
+        prisma.subscription.findMany({
+            where: {
+                startDate: { gte: today, lt: tomorrow }
+            },
+            include: {
+                member: { select: { fullName: true, imageUrl: true } }
             }
-        }
-    });
+        }),
+        // 2. Today's Visits Count
+        prisma.attendance.count({
+            where: { checkIn: { gte: today, lt: tomorrow } }
+        }),
+        // 3. Recent Visits (List)
+        prisma.attendance.findMany({
+            take: 10,
+            orderBy: { checkIn: 'desc' },
+            include: {
+                member: {
+                    select: {
+                        fullName: true,
+                        imageUrl: true,
+                        subscriptions: {
+                            orderBy: { endDate: 'desc' },
+                            take: 1
+                        }
+                    }
+                }
+            }
+        }),
+        // 4. Monthly Visits Count
+        prisma.attendance.count({
+            where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
+        }),
+        // 5. Total Members
+        prisma.member.count(),
+        // 6. New Members This Month
+        prisma.member.count({
+            where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
+        }),
+        // 7. Plan Distribution (Active Subscriptions)
+        prisma.subscription.groupBy({
+            by: ['plan'],
+            _count: { plan: true },
+            where: { endDate: { gte: new Date() } } // Only count active subscriptions
+        })
+    ]);
+
+    const totalRevenue = todaysSubscriptions.reduce((acc, sub) => acc + sub.price, 0);
 
     return {
         revenue: totalRevenue,
         visitsCount: visitsCount,
         monthlyVisits: monthlyVisits,
+        totalMembers: totalMembers,
+        newMembersCount: newMembersCount,
+        planStats: activeSubscriptions.map(p => ({ name: p.plan, value: p._count.plan })),
         recentVisits: recentVisits.map(visit => ({
             id: visit.id,
             member: visit.member.fullName,
@@ -510,7 +515,7 @@ export async function getDailyStats() {
             checkIn: visit.checkIn,
             plan: visit.member.subscriptions[0]?.plan || 'Obunasiz'
         })),
-        transactions: subscriptions.map(sub => ({
+        transactions: todaysSubscriptions.map(sub => ({
             id: sub.id,
             member: sub.member.fullName,
             image: sub.member.imageUrl,
