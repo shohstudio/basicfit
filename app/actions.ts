@@ -528,66 +528,54 @@ export async function getDailyStats() {
 
 // --- REPORTING ACTIONS ---
 
+export async function getMonthlyReportStats() {
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const [newMembersCount, totalRevenueAggregate, newSubsCount, monthlyVisits] = await Promise.all([
+        // 1. New Members Count
+        prisma.member.count({
+            where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
+        }),
+        // 2. Total Revenue
+        prisma.subscription.aggregate({
+            _sum: { price: true },
+            where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
+        }),
+        // 3. New Subscriptions Count
+        prisma.subscription.count({
+            where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
+        }),
+        // 4. Monthly Visits
+        prisma.attendance.count({
+            where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
+        })
+    ]);
+
+    const totalRevenue = totalRevenueAggregate._sum.price || 0;
+    const monthName = startOfMonth.toLocaleString('uz-UZ', { month: 'long', year: 'numeric' });
+
+    return {
+        monthName,
+        newMembers: newMembersCount,
+        totalRevenue: totalRevenue,
+        subscriptionCount: newSubsCount,
+        totalVisits: monthlyVisits
+    };
+}
+
 export async function sendMonthlyReport() {
     try {
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-        // 1. New Members Count
-        const newMembersCount = await prisma.member.count({
-            where: {
-                createdAt: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
-        });
-
-        // 2. Total Revenue
-        const revenueAgg = await prisma.subscription.aggregate({
-            _sum: {
-                price: true
-            },
-            where: {
-                startDate: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
-        });
-        const totalRevenue = revenueAgg._sum.price || 0;
-
-        // 3. New Subscriptions Count
-        const newSubsCount = await prisma.subscription.count({
-            where: {
-                startDate: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
-        });
-
-        // 4. Monthly Visits
-        const monthlyVisits = await prisma.attendance.count({
-            where: {
-                checkIn: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
-        });
-
-        // Format Month Name (e.g., "Yanvar 2026")
-        const monthName = startOfMonth.toLocaleString('uz-UZ', { month: 'long', year: 'numeric' });
+        const stats = await getMonthlyReportStats();
 
         // Webhook Payload
         await sendWebhook("MONTHLY_REPORT", {
-            reportMonth: monthName,
-            newMembers: newMembersCount,
-            totalRevenue: totalRevenue,
-            subscriptionCount: newSubsCount,
-            totalVisits: monthlyVisits,
+            reportMonth: stats.monthName,
+            newMembers: stats.newMembers,
+            totalRevenue: stats.totalRevenue,
+            subscriptionCount: stats.subscriptionCount,
+            totalVisits: stats.totalVisits,
             reportDate: new Date().toLocaleString("ru-RU", { timeZone: "Asia/Tashkent" })
         });
 
