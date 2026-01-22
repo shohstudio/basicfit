@@ -1,62 +1,289 @@
 "use server";
 
 import { prisma } from "./lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { sendWebhook } from "./lib/webhook";
 
-export async function getMembers(query: string = "", page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+// --- CACHED DATA FETCHERS ---
 
-    const whereCondition = {
-        OR: [
-            { fullName: { contains: query } },
-            { email: { contains: query } },
-        ],
-    };
+export const getMembers = unstable_cache(
+    async (query: string = "", page: number = 1, limit: number = 10) => {
+        const skip = (page - 1) * limit;
 
-    const [members, totalCount] = await Promise.all([
-        prisma.member.findMany({
-            where: whereCondition,
-            include: {
-                subscriptions: {
-                    orderBy: { endDate: 'desc' },
-                    take: 1
+        const whereCondition = {
+            OR: [
+                { fullName: { contains: query } },
+                { email: { contains: query } },
+            ],
+        };
+
+        const [members, totalCount] = await Promise.all([
+            prisma.member.findMany({
+                where: whereCondition,
+                include: {
+                    subscriptions: {
+                        orderBy: { endDate: 'desc' },
+                        take: 1
+                    }
+                },
+                orderBy: { createdAt: "desc" },
+                skip,
+                take: limit,
+            }),
+            prisma.member.count({ where: whereCondition })
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Dynamic Status Calculation
+        const processedMembers = members.map((member: any) => {
+            const latestSub = member.subscriptions[0];
+            let computedStatus = member.status;
+
+            if (latestSub) {
+                const now = new Date();
+                const endDate = new Date(latestSub.endDate);
+                if (endDate < now) {
+                    computedStatus = "INACTIVE"; // Expired
+                } else {
+                    computedStatus = "ACTIVE";
+                }
+            }
+
+            return { ...member, status: computedStatus };
+        });
+
+        return {
+            members: processedMembers,
+            totalPages,
+            currentPage: page,
+            totalMembers: totalCount
+        };
+    },
+    ['getMembers'],
+    { tags: ['members'] }
+);
+
+export const getAllSubscriptions = unstable_cache(
+    async (page: number = 1, limit: number = 10) => {
+        const skip = (page - 1) * limit;
+
+        const [subscriptions, totalCount] = await Promise.all([
+            prisma.subscription.findMany({
+                include: {
+                    member: {
+                        select: {
+                            fullName: true,
+                            imageUrl: true,
+                            status: true
+                        }
+                    }
+                },
+                orderBy: {
+                    startDate: 'desc'
+                },
+                skip,
+                take: limit
+            }),
+            prisma.subscription.count()
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const processedSubscriptions = subscriptions.map(sub => {
+            const now = new Date();
+            const endDate = new Date(sub.endDate);
+            const isActive = endDate > now;
+
+            return {
+                id: sub.id,
+                memberName: sub.member.fullName,
+                memberImage: sub.member.imageUrl,
+                plan: sub.plan,
+                price: sub.price,
+                status: isActive ? "ACTIVE" : "EXPIRED",
+                startDate: sub.startDate,
+                endDate: sub.endDate
+            };
+        });
+
+        return {
+            subscriptions: processedSubscriptions,
+            totalPages,
+            currentPage: page,
+            totalSubscriptions: totalCount
+        };
+    },
+    ['getAllSubscriptions'],
+    { tags: ['subscriptions'] }
+);
+
+export const getDailyStats = unstable_cache(
+    async () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        const [
+            todaysSubscriptions,
+            visitsCount,
+            recentVisits,
+            monthlyVisits,
+            totalMembers,
+            newMembersCount,
+            activeSubscriptions
+        ] = await Promise.all([
+            // 1. Today's Subscriptions (for Revenue)
+            prisma.subscription.findMany({
+                where: {
+                    startDate: { gte: today, lt: tomorrow }
+                },
+                include: {
+                    member: { select: { fullName: true, imageUrl: true } }
+                }
+            }),
+            // 2. Today's Visits Count
+            prisma.attendance.count({
+                where: { checkIn: { gte: today, lt: tomorrow } }
+            }),
+            // 3. Recent Visits (List)
+            prisma.attendance.findMany({
+                take: 10,
+                orderBy: { checkIn: 'desc' },
+                include: {
+                    member: {
+                        select: {
+                            fullName: true,
+                            imageUrl: true,
+                            subscriptions: {
+                                orderBy: { endDate: 'desc' },
+                                take: 1
+                            }
+                        }
+                    }
+                }
+            }),
+            // 4. Monthly Visits Count
+            prisma.attendance.count({
+                where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
+            }),
+            // 5. Total Members
+            prisma.member.count(),
+            // 6. New Members This Month
+            prisma.member.count({
+                where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
+            }),
+            // 7. Plan Distribution (Active Subscriptions)
+            prisma.subscription.groupBy({
+                by: ['plan'],
+                _count: { plan: true },
+                where: { endDate: { gte: new Date() } } // Only count active subscriptions
+            })
+        ]);
+
+        const totalRevenue = todaysSubscriptions.reduce((acc, sub) => acc + sub.price, 0);
+
+        return {
+            revenue: totalRevenue,
+            visitsCount: visitsCount,
+            monthlyVisits: monthlyVisits,
+            totalMembers: totalMembers,
+            newMembersCount: newMembersCount,
+            planStats: activeSubscriptions.map(p => ({ name: p.plan, value: p._count.plan })),
+            recentVisits: recentVisits.map(visit => ({
+                id: visit.id,
+                member: visit.member.fullName,
+                image: visit.member.imageUrl,
+                checkIn: visit.checkIn,
+                plan: visit.member.subscriptions[0]?.plan || 'Obunasiz'
+            })),
+            transactions: todaysSubscriptions.map(sub => ({
+                id: sub.id,
+                member: sub.member.fullName,
+                image: sub.member.imageUrl,
+                amount: sub.price,
+                plan: sub.plan,
+                date: sub.startDate
+            }))
+        };
+    },
+    ['getDailyStats'],
+    { tags: ['stats', 'attendance', 'subscriptions', 'members'] } // Using broad tags for stats
+);
+
+export const getMonthlyReportStats = unstable_cache(
+    async () => {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        const [newMembersCount, totalRevenueAggregate, newSubsCount, monthlyVisits] = await Promise.all([
+            // 1. New Members Count
+            prisma.member.count({
+                where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
+            }),
+            // 2. Total Revenue
+            prisma.subscription.aggregate({
+                _sum: { price: true },
+                where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
+            }),
+            // 3. New Subscriptions Count
+            prisma.subscription.count({
+                where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
+            }),
+            // 4. Monthly Visits
+            prisma.attendance.count({
+                where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
+            })
+        ]);
+
+        const totalRevenue = totalRevenueAggregate._sum.price || 0;
+        const monthName = startOfMonth.toLocaleString('uz-UZ', { month: 'long', year: 'numeric' });
+
+        return {
+            monthName,
+            newMembers: newMembersCount,
+            totalRevenue: totalRevenue,
+            subscriptionCount: newSubsCount,
+            totalVisits: monthlyVisits
+        };
+    },
+    ['getMonthlyReportStats'],
+    { tags: ['reports', 'stats'] }
+);
+
+export const getAttendance = unstable_cache(
+    async (date?: Date) => {
+        // Default to today (start of day to end of day)
+        const targetDate = date || new Date();
+        const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+        return await prisma.attendance.findMany({
+            where: {
+                checkIn: {
+                    gte: startOfDay,
+                    lte: endOfDay
                 }
             },
-            orderBy: { createdAt: "desc" },
-            skip,
-            take: limit,
-        }),
-        prisma.member.count({ where: whereCondition })
-    ]);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    // Dynamic Status Calculation
-    const processedMembers = members.map((member: any) => {
-        const latestSub = member.subscriptions[0];
-        let computedStatus = member.status;
-
-        if (latestSub) {
-            const now = new Date();
-            const endDate = new Date(latestSub.endDate);
-            if (endDate < now) {
-                computedStatus = "INACTIVE"; // Expired
-            } else {
-                computedStatus = "ACTIVE";
+            include: {
+                member: true
+            },
+            orderBy: {
+                checkIn: 'desc'
             }
-        }
+        });
+    },
+    ['getAttendance'],
+    { tags: ['attendance'] }
+);
 
-        return { ...member, status: computedStatus };
-    });
 
-    return {
-        members: processedMembers,
-        totalPages,
-        currentPage: page,
-        totalMembers: totalCount
-    };
-}
+// --- MUTATIONS (WITH INVALIDATION) ---
 
 export async function createMember(formData: FormData) {
     try {
@@ -86,8 +313,6 @@ export async function createMember(formData: FormData) {
         if (!fullName || !phone) {
             return { success: false, message: "Ism va Telefon raqami majburiy!" };
         }
-
-        // ... (duplicate check)
 
         // Transaction: Create Member AND Subscription
         await prisma.$transaction(async (tx) => {
@@ -121,6 +346,11 @@ export async function createMember(formData: FormData) {
             price: price
         });
 
+        revalidateTag('members');
+        revalidateTag('stats');
+        revalidateTag('reports');
+        revalidateTag('subscriptions'); // Because stats depend on new members too for count
+
         revalidatePath("/");
         revalidatePath("/members");
         revalidatePath("/subscriptions");
@@ -132,12 +362,15 @@ export async function createMember(formData: FormData) {
 }
 
 export async function deleteMember(id: string) {
-    // Cascade delete is usually handled by DB, but here we might need to delete subs first if not configured
-    // Prisma usually handles cascade if relation is set up right, but safe to delete manually in transaction
     await prisma.$transaction(async (tx) => {
         await tx.subscription.deleteMany({ where: { memberId: id } });
         await tx.member.delete({ where: { id } });
     });
+
+    revalidateTag('members');
+    revalidateTag('stats');
+    revalidateTag('reports');
+    revalidateTag('subscriptions');
 
     revalidatePath("/");
     revalidatePath("/members");
@@ -202,6 +435,11 @@ export async function updateMember(id: string, formData: FormData) {
             }
         });
 
+        revalidateTag('members');
+        revalidateTag('stats');
+        revalidateTag('reports');
+        revalidateTag('subscriptions');
+
         revalidatePath("/");
         revalidatePath("/members");
         revalidatePath("/subscriptions");
@@ -250,6 +488,11 @@ export async function renewSubscription(memberId: string, formData: FormData) {
             startDate,
             endDate
         });
+
+        revalidateTag('members');
+        revalidateTag('stats');
+        revalidateTag('reports');
+        revalidateTag('subscriptions');
 
         revalidatePath("/");
         revalidatePath("/members");
@@ -369,6 +612,10 @@ export async function scanMember(idInput: string) {
         plan: member.subscriptions[0]?.plan || "Obunasiz"
     });
 
+    revalidateTag('attendance');
+    revalidateTag('stats'); // Stats show recent visits and visit counts
+    revalidateTag('reports'); // Reports show total visits
+
     return { success: true, message: "Xush kelibsiz!", member, checkIn: attendance.checkIn };
 }
 
@@ -399,170 +646,14 @@ export async function createPlan(formData: FormData) {
         }
     });
 
+    revalidateTag('subscriptions'); // Assuming plans affect subscriptions UI or similar
     revalidatePath("/subscriptions");
 }
 
 export async function deletePlan(id: string) {
     await prisma.plan.delete({ where: { id } });
+    revalidateTag('subscriptions');
     revalidatePath("/subscriptions");
-}
-
-// --- ATTENDANCE ACTIONS ---
-
-export async function getAttendance(date?: Date) {
-    // Default to today (start of day to end of day)
-    const targetDate = date || new Date();
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
-
-    return await prisma.attendance.findMany({
-        where: {
-            checkIn: {
-                gte: startOfDay,
-                lte: endOfDay
-            }
-        },
-        include: {
-            member: true
-        },
-        orderBy: {
-            checkIn: 'desc'
-        }
-    });
-}
-
-// --- STATS ACTIONS ---
-
-export async function getDailyStats() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    const [
-        todaysSubscriptions,
-        visitsCount,
-        recentVisits,
-        monthlyVisits,
-        totalMembers,
-        newMembersCount,
-        activeSubscriptions
-    ] = await Promise.all([
-        // 1. Today's Subscriptions (for Revenue)
-        prisma.subscription.findMany({
-            where: {
-                startDate: { gte: today, lt: tomorrow }
-            },
-            include: {
-                member: { select: { fullName: true, imageUrl: true } }
-            }
-        }),
-        // 2. Today's Visits Count
-        prisma.attendance.count({
-            where: { checkIn: { gte: today, lt: tomorrow } }
-        }),
-        // 3. Recent Visits (List)
-        prisma.attendance.findMany({
-            take: 10,
-            orderBy: { checkIn: 'desc' },
-            include: {
-                member: {
-                    select: {
-                        fullName: true,
-                        imageUrl: true,
-                        subscriptions: {
-                            orderBy: { endDate: 'desc' },
-                            take: 1
-                        }
-                    }
-                }
-            }
-        }),
-        // 4. Monthly Visits Count
-        prisma.attendance.count({
-            where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
-        }),
-        // 5. Total Members
-        prisma.member.count(),
-        // 6. New Members This Month
-        prisma.member.count({
-            where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
-        }),
-        // 7. Plan Distribution (Active Subscriptions)
-        prisma.subscription.groupBy({
-            by: ['plan'],
-            _count: { plan: true },
-            where: { endDate: { gte: new Date() } } // Only count active subscriptions
-        })
-    ]);
-
-    const totalRevenue = todaysSubscriptions.reduce((acc, sub) => acc + sub.price, 0);
-
-    return {
-        revenue: totalRevenue,
-        visitsCount: visitsCount,
-        monthlyVisits: monthlyVisits,
-        totalMembers: totalMembers,
-        newMembersCount: newMembersCount,
-        planStats: activeSubscriptions.map(p => ({ name: p.plan, value: p._count.plan })),
-        recentVisits: recentVisits.map(visit => ({
-            id: visit.id,
-            member: visit.member.fullName,
-            image: visit.member.imageUrl,
-            checkIn: visit.checkIn,
-            plan: visit.member.subscriptions[0]?.plan || 'Obunasiz'
-        })),
-        transactions: todaysSubscriptions.map(sub => ({
-            id: sub.id,
-            member: sub.member.fullName,
-            image: sub.member.imageUrl,
-            amount: sub.price,
-            plan: sub.plan,
-            date: sub.startDate
-        }))
-    };
-}
-
-// --- REPORTING ACTIONS ---
-
-export async function getMonthlyReportStats() {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    const [newMembersCount, totalRevenueAggregate, newSubsCount, monthlyVisits] = await Promise.all([
-        // 1. New Members Count
-        prisma.member.count({
-            where: { createdAt: { gte: startOfMonth, lte: endOfMonth } }
-        }),
-        // 2. Total Revenue
-        prisma.subscription.aggregate({
-            _sum: { price: true },
-            where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
-        }),
-        // 3. New Subscriptions Count
-        prisma.subscription.count({
-            where: { startDate: { gte: startOfMonth, lte: endOfMonth } }
-        }),
-        // 4. Monthly Visits
-        prisma.attendance.count({
-            where: { checkIn: { gte: startOfMonth, lte: endOfMonth } }
-        })
-    ]);
-
-    const totalRevenue = totalRevenueAggregate._sum.price || 0;
-    const monthName = startOfMonth.toLocaleString('uz-UZ', { month: 'long', year: 'numeric' });
-
-    return {
-        monthName,
-        newMembers: newMembersCount,
-        totalRevenue: totalRevenue,
-        subscriptionCount: newSubsCount,
-        totalVisits: monthlyVisits
-    };
 }
 
 export async function sendMonthlyReport() {
@@ -584,56 +675,4 @@ export async function sendMonthlyReport() {
         console.error("REPORT ERROR:", error);
         return { success: false, message: "Hisobot yuborishda xatolik!" };
     }
-}
-
-// --- SUBSCRIPTION PAGE ACTIONS ---
-
-export async function getAllSubscriptions(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-
-    const [subscriptions, totalCount] = await Promise.all([
-        prisma.subscription.findMany({
-            include: {
-                member: {
-                    select: {
-                        fullName: true,
-                        imageUrl: true,
-                        status: true
-                    }
-                }
-            },
-            orderBy: {
-                startDate: 'desc'
-            },
-            skip,
-            take: limit
-        }),
-        prisma.subscription.count()
-    ]);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const processedSubscriptions = subscriptions.map(sub => {
-        const now = new Date();
-        const endDate = new Date(sub.endDate);
-        const isActive = endDate > now;
-
-        return {
-            id: sub.id,
-            memberName: sub.member.fullName,
-            memberImage: sub.member.imageUrl,
-            plan: sub.plan,
-            price: sub.price,
-            status: isActive ? "ACTIVE" : "EXPIRED",
-            startDate: sub.startDate,
-            endDate: sub.endDate
-        };
-    });
-
-    return {
-        subscriptions: processedSubscriptions,
-        totalPages,
-        currentPage: page,
-        totalSubscriptions: totalCount
-    };
 }
