@@ -13,7 +13,9 @@ export default async function Home({
   const action = params.action || "";
 
   try {
-    const members = await getMembers(query);
+    // Dashboard needs all members for stats calculation (new members, plan distribution)
+    // Fetching with a large limit to mimic "all" until Dashboard is refactored to use server-side aggregation
+    const { members } = await getMembers(query, 1, 10000);
     const dailyStats = await getDailyStats();
     return <Dashboard members={members} search={query} action={action} dailyStats={dailyStats} />;
   } catch (error: any) {
