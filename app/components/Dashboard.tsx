@@ -17,7 +17,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
     // Real-time Stats State
     const [realtimeStats, setRealtimeStats] = useState(dailyStats || { revenue: 0, visitsCount: 0, monthlyVisits: 0, transactions: [], recentVisits: [] });
 
-    // Polling Effect for Real-time Updates (every 5 seconds)
+    // Polling Effect for Real-time Updates (every 2 seconds)
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
@@ -26,7 +26,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
             } catch (error) {
                 console.error("Failed to fetch real-time stats:", error);
             }
-        }, 5000);
+        }, 2000);
 
         return () => clearInterval(interval);
     }, []);
@@ -234,7 +234,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
 
                         <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
                             {realtimeStats.recentVisits && realtimeStats.recentVisits.length > 0 ? (
-                                realtimeStats.recentVisits.map((visit: any, idx: number) => (
+                                realtimeStats.recentVisits.slice(0, 10).map((visit: any, idx: number) => (
                                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">
