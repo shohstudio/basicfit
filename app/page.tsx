@@ -15,8 +15,14 @@ export default async function Home({
   try {
     // Optimization: Now using server-side aggregated stats, so we don't need all members.
     // Fetch only the first page for the table view.
-    const { members } = await getMembers(query, 1, 10);
-    const dailyStats = await getDailyStats();
+    // Use Promise.all to fetch data in parallel to reduce load time
+    const [membersData, dailyStats] = await Promise.all([
+      getMembers(query, 1, 10),
+      getDailyStats()
+    ]);
+
+    const { members } = membersData;
+
     return <Dashboard members={members} search={query} action={action} dailyStats={dailyStats} />;
   } catch (error: any) {
     return (
