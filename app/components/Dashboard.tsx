@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, CreditCard, TrendingUp, CalendarCheck } from "lucide-react";
+import { Users, CreditCard, TrendingUp, CalendarCheck, Scan } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
@@ -137,6 +137,14 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                         </div>
                         <h3 className="font-bold text-blue-500">A'zo qo'shish</h3>
                     </div>
+
+                    {/* QR Scanner Card */}
+                    <Link href="/qr-scanner" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40 hover:shadow-md transition-shadow group">
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <Scan className="w-6 h-6" />
+                        </div>
+                        <h3 className="font-bold text-indigo-500">QR Skaner</h3>
+                    </Link>
 
                     {/* New Members */}
                     <Link href="/members" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center h-40 hover:shadow-md transition-shadow">
