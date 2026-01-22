@@ -129,7 +129,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                 </div>
 
                 {/* Main Action Cards & Stats (Row 1) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     {/* Add Member Card */}
                     <div onClick={openAddModal} className="cursor-pointer bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center h-40 group">
                         <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
