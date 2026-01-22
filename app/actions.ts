@@ -13,7 +13,7 @@ const revalidateTag = (tag: string) => {
 // --- CACHED DATA FETCHERS ---
 
 export const getMembers = unstable_cache(
-    async (query: string = "", page: number = 1, limit: number = 10) => {
+    async (query: string = "", page: number = 1, limit: number = 8) => {
         const skip = (page - 1) * limit;
 
         const whereCondition = {
