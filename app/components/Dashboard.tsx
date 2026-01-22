@@ -188,7 +188,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {planData.map((entry, index) => (
+                                        {planData.map((entry: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                                         ))}
                                     </Pie>
@@ -200,7 +200,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             </ResponsiveContainer>
                         </div>
                         <div className="flex justify-center gap-6 mt-4 flex-wrap">
-                            {planData.map((item, index) => (
+                            {planData.map((item: any, index: number) => (
                                 <div key={index} className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                                     <span className="text-sm text-gray-500 font-medium">{item.name} ({item.value})</span>
