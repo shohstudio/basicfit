@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
+import Pagination from "./Pagination";
 
-export default function MembersView({ members, search }: { members: any[], search: string }) {
+export default function MembersView({ members, search, totalPages, currentPage, totalMembers }: { members: any[], search: string, totalPages: number, currentPage: number, totalMembers: number }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<any>(null);
     const [modalMode, setModalMode] = useState<'create' | 'edit' | 'renew'>('create');
@@ -41,7 +42,7 @@ export default function MembersView({ members, search }: { members: any[], searc
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <div>
                         <h3 className="text-3xl font-black text-gray-900 italic tracking-tight">A'ZOLAR RO'YXATI</h3>
-                        <p className="text-gray-500 text-sm mt-1">Jami a'zolar: {members.length}</p>
+                        <p className="text-gray-500 text-sm mt-1">Jami a'zolar: {totalMembers}</p>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
                         <div className="relative group flex-1 md:w-64">
@@ -67,6 +68,8 @@ export default function MembersView({ members, search }: { members: any[], searc
                     </div>
                 </div>
                 <MemberList members={members} onEdit={openEditModal} onRenew={openRenewModal} />
+
+                <Pagination totalPages={totalPages} currentPage={currentPage} />
             </div>
 
             {isModalOpen && (

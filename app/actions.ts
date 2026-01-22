@@ -4,25 +4,36 @@ import { prisma } from "./lib/prisma";
 import { revalidatePath } from "next/cache";
 import { sendWebhook } from "./lib/webhook";
 
-export async function getMembers(query: string = "") {
-    const members = await prisma.member.findMany({
-        where: {
-            OR: [
-                { fullName: { contains: query } },
-                { email: { contains: query } },
-            ],
-        },
-        include: {
-            subscriptions: {
-                orderBy: { endDate: 'desc' },
-                take: 1
-            }
-        },
-        orderBy: { createdAt: "desc" },
-    });
+export async function getMembers(query: string = "", page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const whereCondition = {
+        OR: [
+            { fullName: { contains: query } },
+            { email: { contains: query } },
+        ],
+    };
+
+    const [members, totalCount] = await Promise.all([
+        prisma.member.findMany({
+            where: whereCondition,
+            include: {
+                subscriptions: {
+                    orderBy: { endDate: 'desc' },
+                    take: 1
+                }
+            },
+            orderBy: { createdAt: "desc" },
+            skip,
+            take: limit,
+        }),
+        prisma.member.count({ where: whereCondition })
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     // Dynamic Status Calculation
-    return members.map((member: any) => {
+    const processedMembers = members.map((member: any) => {
         const latestSub = member.subscriptions[0];
         let computedStatus = member.status;
 
@@ -38,6 +49,13 @@ export async function getMembers(query: string = "") {
 
         return { ...member, status: computedStatus };
     });
+
+    return {
+        members: processedMembers,
+        totalPages,
+        currentPage: page,
+        totalMembers: totalCount
+    };
 }
 
 export async function createMember(formData: FormData) {
