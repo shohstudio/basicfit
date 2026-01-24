@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users, CreditCard, TrendingUp, CalendarCheck, Scan } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { toast } from "sonner";
 import MemberList from "./MemberList";
 import MemberForm from "./MemberForm";
 import DashboardLayout from "./DashboardLayout";
@@ -115,9 +116,9 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
                             if (confirm("Oylik hisobotni Telegramga yuborasizmi?")) {
                                 try {
                                     const res = await sendMonthlyReport();
-                                    alert(res.message);
+                                    toast.success(res.message);
                                 } catch (e) {
-                                    alert("Xatolik bo'ldi");
+                                    toast.error("Xatolik bo'ldi");
                                 }
                             }
                         }}

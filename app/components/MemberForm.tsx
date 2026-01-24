@@ -2,6 +2,7 @@
 
 import { createMember, updateMember, renewSubscription } from "../actions";
 import { useRef, useState, useCallback } from "react";
+import { toast } from "sonner";
 import Webcam from "react-webcam";
 import { Camera, Upload, X, RefreshCcw } from "lucide-react";
 
@@ -83,7 +84,7 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
 
     const handleSubmit = async (formData: FormData) => {
         if (!image) {
-            alert("Rasm yuklash majburiy! Iltimos, rasmga oling yoki yuklang.");
+            toast.error("Rasm yuklash majburiy! Iltimos, rasmga oling yoki yuklang.");
             return;
         }
 
@@ -111,7 +112,7 @@ export default function MemberForm({ onClose, initialData, mode = 'create' }: Me
         }
 
         if (result && !result.success) {
-            alert(result.message);
+            toast.error(result.message);
             return;
         }
 

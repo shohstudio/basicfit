@@ -2,6 +2,7 @@
 
 import { Trash2, QrCode, Pencil, X, RefreshCcw } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { deleteMember } from "../actions";
 import MemberQRCode from "./MemberQRCode";
 
@@ -50,7 +51,7 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                                             onClick={() => {
                                                 const shortId = member.id.substring(0, 8);
                                                 navigator.clipboard.writeText(shortId);
-                                                alert("Qisqa ID nusxalandi: " + shortId);
+                                                toast.success("Qisqa ID nusxalandi: " + shortId);
                                             }}
                                             title="Nusxalash uchun bosing"
                                         >
