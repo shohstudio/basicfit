@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { scanMember } from "../actions";
-import { Scan, User, XCircle, CheckCircle, AlertTriangle } from "lucide-react";
+import { scanMember, findMembersForScan } from "../actions";
+import { Scan, User, XCircle, CheckCircle, Search } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 
 export default function QRScannerPage() {
@@ -11,13 +11,20 @@ export default function QRScannerPage() {
     const [input, setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+
     // Keep focus on input for hardware scanners
     useEffect(() => {
-        const focusInput = () => inputRef.current?.focus();
+        const focusInput = () => {
+            // Only focus if we are NOT showing search results (user needs to click to select)
+            if (searchResults.length === 0) {
+                inputRef.current?.focus();
+            }
+        };
         focusInput();
         window.addEventListener("click", focusInput);
         return () => window.removeEventListener("click", focusInput);
-    }, []);
+    }, [searchResults.length]);
 
     const handleScan = async (e: React.FormEvent, directValue?: string) => {
         e.preventDefault();
@@ -26,11 +33,37 @@ export default function QRScannerPage() {
 
         setLoading(true);
         setScanResult(null);
+        setSearchResults([]);
 
         try {
-            const result = await scanMember(valueToScan);
+            // 1. First try to find members
+            const members = await findMembersForScan(valueToScan);
+
+            if (members.length === 0) {
+                setScanResult({ success: false, message: "A'zo topilmadi!" });
+            } else if (members.length === 1) {
+                // If only 1 match, auto scan/check-in
+                const result = await scanMember(members[0].id);
+                setScanResult(result);
+                setInput("");
+            } else {
+                // Multiple matches - show selection
+                setSearchResults(members);
+            }
+        } catch (error) {
+            setScanResult({ success: false, message: "Server xatosi!" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const confirmSelection = async (memberId: string) => {
+        setLoading(true);
+        setSearchResults([]); // Hide selection
+        try {
+            const result = await scanMember(memberId);
             setScanResult(result);
-            setInput(""); // Clear for next scan
+            setInput("");
         } catch (error) {
             setScanResult({ success: false, message: "Server xatosi!" });
         } finally {
@@ -53,29 +86,66 @@ export default function QRScannerPage() {
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     setInput(val);
-                                    // Auto submit if length is 8 (Short ID)
-                                    if (val.length === 8) {
-                                        // Use a small timeout to let state update
+                                    // Auto submit ONLY if strictly digits and length 8 (Short ID)
+                                    // If containing letters, assuming name search -> wait for Enter
+                                    if (/^\d+$/.test(val) && val.length === 8) {
                                         setTimeout(() => {
-                                            const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
-                                            handleScan(fakeEvent, val);
+                                            handleScan({ preventDefault: () => { } } as any, val);
                                         }, 100);
                                     }
                                 }}
-                                placeholder="QR Kodni skanerlang..."
+                                placeholder="QR Kod yoki Ism..."
                                 className="w-full bg-white border border-gray-200 text-gray-900 rounded-xl px-4 py-4 pl-12 focus:ring-2 focus:ring-blue-500 outline-none text-lg shadow-xl shadow-blue-500/5 placeholder:text-gray-400"
                                 autoFocus
                             />
-                            <Scan className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-6 h-6 animate-pulse" />
+                            {input.trim().length > 0 && !/^\d+$/.test(input) ? (
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-6 h-6" />
+                            ) : (
+                                <Scan className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-6 h-6 animate-pulse" />
+                            )}
                         </div>
                         <p className="text-center text-gray-500 text-sm mt-4">
-                            Skaner qurilmangiz ulanganligiga ishonch hosil qiling.
+                            QR kod skanerlash yoki ism yozib Enter bosing
                         </p>
                     </form>
 
                     {/* Result Display */}
                     {loading && (
                         <div className="text-blue-600 text-xl animate-bounce font-medium">Qidirilmoqda...</div>
+                    )}
+
+                    {/* Multiple Search Results Selection */}
+                    {searchResults.length > 0 && !loading && (
+                        <div className="w-full max-w-2xl bg-white border border-gray-200 rounded-3xl p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-center text-gray-900 font-bold mb-6 text-lg">Qaysi birini nazarda tutdingiz?</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {searchResults.map((member) => (
+                                    <button
+                                        key={member.id}
+                                        onClick={() => confirmSelection(member.id)}
+                                        className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md transition-all text-left"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 shrink-0">
+                                            {member.imageUrl ? (
+                                                <img src={member.imageUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-6 h-6 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{member.fullName}</p>
+                                            <p className="text-sm text-gray-500 font-mono">{member.phone}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setSearchResults([])}
+                                className="w-full mt-6 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+                            >
+                                Bekor qilish
+                            </button>
+                        </div>
                     )}
 
                     {scanResult && !loading && (

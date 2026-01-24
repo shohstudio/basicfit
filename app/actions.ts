@@ -633,6 +633,31 @@ export async function scanMember(idInput: string) {
     return { success: true, message: "Xush kelibsiz!", member, checkIn: attendance.checkIn };
 }
 
+export async function findMembersForScan(query: string) {
+    const sanitizedQuery = query.trim();
+    if (!sanitizedQuery) return [];
+
+    const members = await prisma.member.findMany({
+        where: {
+            OR: [
+                { id: { startsWith: sanitizedQuery } },
+                { fullName: { contains: sanitizedQuery } },
+                { phone: { contains: sanitizedQuery } }
+            ]
+        },
+        take: 5,
+        select: {
+            id: true,
+            fullName: true,
+            imageUrl: true,
+            phone: true,
+            status: true
+        }
+    });
+
+    return members;
+}
+
 // --- PLAN ACTIONS ---
 
 export async function getPlans() {
