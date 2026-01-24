@@ -6,7 +6,7 @@ set user "root"
 set password "4yKpBH%oZ\$T@UMfb"
 
 # SSH and update
-spawn ssh -o StrictHostKeyChecking=no $user@$ip "cd /var/www/basicfit && git reset --hard && git pull origin main && npm install && npm run build && pm2 restart basicfit && pm2 save"
+spawn ssh -o StrictHostKeyChecking=no $user@$ip "cd /var/www/basicfit && git reset --hard && git pull origin main && npm install --legacy-peer-deps && npm run build && pm2 restart basicfit && pm2 save"
 expect {
   "password:" { send "$password\r"; exp_continue }
   eof
