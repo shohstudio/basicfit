@@ -39,6 +39,9 @@ export const getMembers = unstable_cache(
                         select: {
                             endDate: true
                         }
+                    },
+                    _count: {
+                        select: { attendance: true }
                     }
                 },
                 orderBy: { createdAt: "desc" },
@@ -54,10 +57,16 @@ export const getMembers = unstable_cache(
         const processedMembers = members.map((member: any) => {
             const latestSub = member.subscriptions[0];
             let computedStatus = member.status;
+            let remainingDays = null;
 
             if (latestSub) {
                 const now = new Date();
                 const endDate = new Date(latestSub.endDate);
+
+                // Calculate remaining days
+                const diffTime = endDate.getTime() - now.getTime();
+                remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
                 if (endDate < now) {
                     computedStatus = "INACTIVE"; // Expired
                 } else {
@@ -65,7 +74,12 @@ export const getMembers = unstable_cache(
                 }
             }
 
-            return { ...member, status: computedStatus };
+            return {
+                ...member,
+                status: computedStatus,
+                visitsCount: member._count.attendance,
+                remainingDays
+            };
         });
 
         return {

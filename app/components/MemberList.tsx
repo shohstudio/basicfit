@@ -24,8 +24,9 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                 <thead>
                     <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-bold border-b border-gray-100">
                         <th className="p-4">To'liq Ism</th>
+                        <th className="p-4">Tashriflar</th>
+                        <th className="p-4">Obuna</th>
                         <th className="p-4">Telefon</th>
-                        <th className="p-4">Holat</th>
                         <th className="p-4">Ro'yxatga Olingan</th>
                         <th className="p-4 text-right">Amallar</th>
                     </tr>
@@ -33,7 +34,7 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                 <tbody className="divide-y divide-gray-100">
                     {members.length === 0 ? (
                         <tr>
-                            <td colSpan={5} className="p-8 text-center text-gray-500">
+                            <td colSpan={6} className="p-8 text-center text-gray-500">
                                 A'zolar topilmadi
                             </td>
                         </tr>
@@ -59,15 +60,26 @@ export default function MemberList({ members, onEdit, onRenew }: { members: any[
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-gray-500 font-mono text-sm font-medium">{member.phone}</td>
                                 <td className="p-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${member.status?.toUpperCase() === "ACTIVE"
-                                        ? "bg-green-50 text-green-600 border-green-200"
-                                        : "bg-red-50 text-red-600 border-red-200"
-                                        }`}>
-                                        {member.status === "ACTIVE" ? "Faol" : "Nofaol"}
+                                    <span className="font-black text-gray-900 bg-gray-100 px-2 py-1 rounded-md text-xs">
+                                        {member.visitsCount || 0}
                                     </span>
                                 </td>
+                                <td className="p-4">
+                                    {member.remainingDays !== null ? (
+                                        <div className={`text-xs font-bold px-2 py-1 rounded-full inline-block ${member.remainingDays > 7
+                                            ? "bg-green-100 text-green-700"
+                                            : member.remainingDays > 0
+                                                ? "bg-yellow-100 text-yellow-700"
+                                                : "bg-red-100 text-red-700"
+                                            }`}>
+                                            {member.remainingDays > 0 ? `${member.remainingDays} kun` : "Tugagan"}
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-gray-400 font-medium">Obunasiz</span>
+                                    )}
+                                </td>
+                                <td className="p-4 text-gray-500 font-mono text-sm font-medium">{member.phone}</td>
                                 <td className="p-4 text-sm text-gray-500 font-medium">
                                     {member.createdAt ? new Date(member.createdAt).toLocaleDateString() : "-"}
                                 </td>
