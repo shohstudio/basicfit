@@ -27,7 +27,7 @@ export default function Dashboard({ members, search, action, dailyStats }: { mem
             } catch (error) {
                 console.error("Failed to fetch real-time stats:", error);
             }
-        }, 2000);
+        }, 15000); // Updated to 15 seconds to reduce load
 
         return () => clearInterval(interval);
     }, []);

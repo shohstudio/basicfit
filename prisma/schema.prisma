@@ -29,6 +29,9 @@ model Member {
   updatedAt     DateTime       @updatedAt
   subscriptions Subscription[]
   attendance    Attendance[]
+
+  @@index([fullName])
+  @@index([phone])
 }
 
 model Subscription {
@@ -39,6 +42,8 @@ model Subscription {
   endDate   DateTime
   memberId  String
   member    Member   @relation(fields: [memberId], references: [id])
+  
+  @@index([endDate]) 
 }
 
 model Attendance {
@@ -46,6 +51,9 @@ model Attendance {
   checkIn   DateTime @default(now())
   memberId  String
   member    Member   @relation(fields: [memberId], references: [id])
+
+  @@index([checkIn])
+  @@index([memberId])
 }
 
 model Plan {
